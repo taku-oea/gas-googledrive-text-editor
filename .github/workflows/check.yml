@@ -1,0 +1,24 @@
+# push / PR のたびに構文・SRI の確認（npm run check）と単体テスト（npm test）を回す。
+# dist/ は git 管理外なので、ここでは「import map に SRI が揃っているか」までを見る
+# （dist/vendor の中身と SRI の突き合わせは、ビルドした手元で npm run check が行う）。
+name: check
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # package-lock.json の版どおりに入れる。esbuild などの postinstall は確認とテストに要らないので走らせない。
+      - run: npm ci --ignore-scripts
+      - run: npm run check
+      - run: npm test

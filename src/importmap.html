@@ -1,0 +1,197 @@
+<!--
+  =====================================================================
+  CodeMirror 6 の読み込み（import map + esm.sh）
+
+  CM6 は @codemirror/state などのコアパッケージが「同一プロセス内で 1 インスタンス」
+  であることを前提に設計されている（Facet / StateField を参照同一性で識別するため）。
+  複数の URL から別コピーが読み込まれると "Unrecognized extension value" で壊れる。
+
+  そこで各パッケージには ?external=... を付けてコアをバンドルさせず bare specifier
+  のまま出力させ、その bare specifier をこの import map で 1 つの URL に固定している。
+  これで何個の言語パッケージを足してもコアは必ず 1 インスタンスになる。
+
+  バージョンは全て固定。更新するときは
+    npm view @codemirror/state version
+  等で確認し、ここの数字を書き換えて clasp push すること。
+  esm.sh から取るのはフォールバック。本命は tools/build.mjs が作る content-hash 付きの
+  バンドル 1 本（"vendor"。mermaid も遅延チャンクとして同梱）で、`npm run build -- --apply` が
+  下の vendor:begin〜end を書き換えて登録する。バージョンを変えるときは package.json と
+  tools/build.mjs の ESM_SH の両方を直す。
+
+  自前配信のファイルにはすべて "integrity"（SHA-384 の SRI）を付けている。配信元の中身が
+  build の出力と 1 バイトでも違えば読み込みは失敗する（改ざんされたコードを実行しない）。
+  esm.sh の項目は URL が並んでいるだけで、スクリプトプロパティ ESM_FALLBACK_ENABLED=true の
+  ときしか js.html の Vendor.load() は読みに行かない（既定では使わない）。
+-->
+<!-- vendor:begin（tools/build.mjs が生成する。手で編集しない） -->
+<link rel="preconnect" href="https://assets.oea.jp" crossorigin>
+<script type="importmap">
+{
+  "imports": {
+    "vendor": "https://assets.oea.jp/apps/editor/vendor/vendor.WGTNV46C.js",
+    "@lezer/common": "https://esm.sh/@lezer/common@1.5.2",
+    "@lezer/highlight": "https://esm.sh/@lezer/highlight@1.2.3?external=@lezer/common",
+    "@lezer/lr": "https://esm.sh/@lezer/lr@1.4.10?external=@lezer/common",
+    "@codemirror/state": "https://esm.sh/@codemirror/state@6.7.4",
+    "@codemirror/view": "https://esm.sh/@codemirror/view@6.43.11?external=@codemirror/state",
+    "@codemirror/language": "https://esm.sh/@codemirror/language@6.12.4?external=@codemirror/state,@codemirror/view,@lezer/common,@lezer/highlight,@lezer/lr",
+    "@codemirror/commands": "https://esm.sh/@codemirror/commands@6.11.0?external=@codemirror/state,@codemirror/view,@codemirror/language,@lezer/common",
+    "@codemirror/search": "https://esm.sh/@codemirror/search@6.7.2?external=@codemirror/state,@codemirror/view",
+    "@codemirror/autocomplete": "https://esm.sh/@codemirror/autocomplete@6.20.3?external=@codemirror/state,@codemirror/view,@codemirror/language,@lezer/common",
+    "@codemirror/lint": "https://esm.sh/@codemirror/lint@6.9.7?external=@codemirror/state,@codemirror/view",
+    "@codemirror/merge": "https://esm.sh/@codemirror/merge@6.12.2?external=@codemirror/state,@codemirror/view,@codemirror/language,@lezer/common,@lezer/highlight",
+    "codemirror": "https://esm.sh/codemirror@6.0.2?external=@codemirror/state,@codemirror/view,@codemirror/language,@codemirror/commands,@codemirror/search,@codemirror/autocomplete,@codemirror/lint,@lezer/common,@lezer/highlight,@lezer/lr",
+    "@codemirror/lang-javascript": "https://esm.sh/@codemirror/lang-javascript@6.2.5?external=@codemirror/state,@codemirror/view,@codemirror/language,@codemirror/autocomplete,@lezer/common,@lezer/highlight,@lezer/lr",
+    "@codemirror/lang-json": "https://esm.sh/@codemirror/lang-json@6.0.2?external=@codemirror/state,@codemirror/view,@codemirror/language,@codemirror/autocomplete,@lezer/common,@lezer/highlight,@lezer/lr",
+    "@codemirror/lang-css": "https://esm.sh/@codemirror/lang-css@6.3.1?external=@codemirror/state,@codemirror/view,@codemirror/language,@codemirror/autocomplete,@lezer/common,@lezer/highlight,@lezer/lr",
+    "@codemirror/lang-html": "https://esm.sh/@codemirror/lang-html@6.4.12?external=@codemirror/state,@codemirror/view,@codemirror/language,@codemirror/autocomplete,@lezer/common,@lezer/highlight,@lezer/lr,@codemirror/lang-css,@codemirror/lang-javascript",
+    "@codemirror/lang-markdown": "https://esm.sh/@codemirror/lang-markdown@6.5.2?external=@codemirror/state,@codemirror/view,@codemirror/language,@codemirror/autocomplete,@lezer/common,@lezer/highlight,@lezer/lr,@codemirror/lang-css,@codemirror/lang-html,@codemirror/lang-javascript",
+    "@codemirror/lang-python": "https://esm.sh/@codemirror/lang-python@6.2.1?external=@codemirror/state,@codemirror/view,@codemirror/language,@codemirror/autocomplete,@lezer/common,@lezer/highlight,@lezer/lr",
+    "@codemirror/lang-yaml": "https://esm.sh/@codemirror/lang-yaml@6.1.3?external=@codemirror/state,@codemirror/view,@codemirror/language,@codemirror/autocomplete,@lezer/common,@lezer/highlight,@lezer/lr",
+    "@codemirror/lang-sql": "https://esm.sh/@codemirror/lang-sql@6.10.0?external=@codemirror/state,@codemirror/view,@codemirror/language,@codemirror/autocomplete,@lezer/common,@lezer/highlight,@lezer/lr",
+    "@codemirror/lang-xml": "https://esm.sh/@codemirror/lang-xml@6.1.0?external=@codemirror/state,@codemirror/view,@codemirror/language,@codemirror/autocomplete,@lezer/common,@lezer/highlight,@lezer/lr",
+    "@codemirror/legacy-modes/": "https://esm.sh/@codemirror/legacy-modes@6.5.4/",
+    "@replit/codemirror-indentation-markers": "https://esm.sh/@replit/codemirror-indentation-markers@6.5.3?external=@codemirror/state,@codemirror/view,@codemirror/language",
+    "marked": "https://esm.sh/marked@18.0.12",
+    "dompurify": "https://esm.sh/dompurify@3.4.15",
+    "mermaid": "https://esm.sh/mermaid@12.0.0",
+    "fuzzysort": "https://esm.sh/fuzzysort@4.0.2"
+  },
+  "integrity": {
+    "https://assets.oea.jp/apps/editor/vendor/chunks/mermaid.core.5OMFU7QK.js": "sha384-DFjQkY5GCajoWY1cZz9g054LhgEy5venm55uvmZ/fqn011Uwxoq18gTZ5DLzSbxJ",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/diagram-3UASUU5V.JVQG5LBL.js": "sha384-rb/u2sjd36hDAw4Hc+6cUlarHk+DlZx87cBjXvqcIU7IkYmJd1iYfJhZfi3mZc+R",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/usecaseDiagram-POWQR4AR.HN2NCQEU.js": "sha384-YeBAizSBXwSVST3lw3CVQsQ4LZKi24Q32hC6aPFhSJbr8oPLBnbWi4n8YfgMfsWR",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/wardleyDiagram-VNRHLVJA.ZV6UDPZC.js": "sha384-3KtHAviizTdPLb359RXLPvpMLTh+75foeShRyULZ9wcWhYJEtwU/pDrcWubpSDtW",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/cynefinDiagram-VND7K2PF.VQAD7NGT.js": "sha384-sQWv51QKbpq+3bTKHrPYWz4mUUCH17dpqWR0W+T2qJ5Bh7YV41XZ36B4TBLX89Gw",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/railroadDiagram-XR7U4H2S.FMAE2RXB.js": "sha384-Wm73Tvum3StKsTOiYbpYkmhLVLKmBYfqYG1BBV2JkIrGlT4pFvWHz5bagpYXCbm+",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/ebnfDiagram-ZINNZB2B.QFZSZ6EQ.js": "sha384-F0gbVlfOh4DcK63tzhKviBs9LRFhPq4usoC0vbUmeJ5tGf0EaUi7wLoskYn/cl9y",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/abnfDiagram-O67JEVCF.FH6GXDY3.js": "sha384-wPZL7k48Yy0g3YvtH5HkF/aEwXeVqHhJXVCWwKtLndzqO5dwWlJ+H6mjeI9zRu3n",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/pegDiagram-GJSIUBJH.T23QUOUT.js": "sha384-HFCmVxBDP8Wq8xT8Sf7vV6l/vsd2CXH4bpiuwY1H/mLX5PphkXm1Hqe8+xZVRdMx",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.MXH5L7NK.js": "sha384-ylGfSOqxOmnmFcJe5StkQJAe9p9XHFfSLMdneTloliN8itiU+QtAyeUGfBJvU82p",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/diagram-MLGK6HIB.4FRRCMMF.js": "sha384-E0yIZbVC4UjJWw7qx449o0I2A1hgJb63iTqUFYGZpYzsiMVi4T1aS0ea5pxj0PgZ",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/diagram-MPIPVDR6.AQZYXNZR.js": "sha384-rIrxhsBLUhFQOkAXbirR5s+gzl4t0Jhk8zIb+09InE8AZrV/WgOhdyMV451rdziT",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/blockDiagram-BEXU5L5S.FGHVOT72.js": "sha384-/4GUzcE0RUxkuDGGa55W4MKqYwpYA+pxeEoYaIqvkO9Pmu9k6EVXH/qFo4W/mfAC",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/diagram-CDSNMT55.7VBGYY66.js": "sha384-4COv51+tPKbRLK7440Qgr8vRBAdBI/PlaAzwv78gk+h51AaVPFi4Qy13eb3K8AFH",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/architectureDiagram-NJMV4G6O.F4MXC52Y.js": "sha384-X9IWZIfKdaG++0DecUha0IWOynVFX5B9qtMNZkYWT5+Ojq3GJJQ/yGRJRYoaakZG",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/diagram-ATOU4E4O.RECLZLUK.js": "sha384-pmKN+WSCGrvwEUeyoPH6zqDV0dENhXQ1O5FDnUpL/gkJstpnGZ4UwrAGG/e18NVe",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/ishikawaDiagram-OU5B5YK6.IGWI2GUE.js": "sha384-XxTx8qQFO6Nz8DYGY2dzKQqJUMp7BlaQAnRDgNVMIIl+vj6RVG3RuY48Imzwka4x",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/vennDiagram-UO4OBE2U.7QKWOLSX.js": "sha384-+XaWc9pUZOx60JFt8FaeQOfkOS1umz9Ug2IAhWAyBYSue5sCMz6fOMQ0tKSMBvHD",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/sequenceDiagram-PO4LG4MO.2GY5VFXA.js": "sha384-XEAv58OXsnMnCVy51v1fbEcVkqedFb2JW357Mp/5j6JArWtbNQJQCWjoxC6lmWr2",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/classDiagram-v2-NBCMYWYE.JLNPCZZQ.js": "sha384-F8No+9+8FEDij+HP1/+bhCRPyuuqfNaG23HvF7t4QB2Ajx9Z0epNDRKU+EDf3qIQ",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/stateDiagram-v2-GCMORJYK.EGFAASWR.js": "sha384-eNJP8QOfANNn0yPzBM82/oiefQJvAhWqThx3wl850TeOOTkHS1zJ3EZGiFdTL0Ip",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/journeyDiagram-ZHPQQLJL.S4SDTKQV.js": "sha384-+pb5LpjwAAPugWjJ4sqw1USBVXQnGFQS+z+3Zq48YmvC9EdU/pDUz783YfKYFOgg",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/timeline-definition-EJHVYXUP.4YSJXPK7.js": "sha384-uQZHx3noIfdJHpPZck2QsUdnGbYv3aIgm+gGIMaQ1ftBszqn4g4FStpGNTSMMEtI",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/mindmap-definition-NLK3R4M7.GQSBBB25.js": "sha384-cSh/9t48BWU71Hx/1s4HhE5xXH12MZzdSXOtogVVF4CMMBgSpU4gqkaxr1+mnC1p",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/kanban-definition-PNTS6WVX.RTZRLLID.js": "sha384-FMx3V5fAILpIWbsz2JVLaUHEY9/1dRnUkLv4FiVaRdvEbIkf5I2QJVLuziM5bGNx",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/sankeyDiagram-IPEJSGJF.LJSUJNKV.js": "sha384-gb1QHOvklgnK2wrMWpvM0GLLvi/o3DaDoEc8FVp3HJ2HLrk6oYnlmjhJ9Sx6gMtM",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/cynefin-EF2NZ3EQ.EO7TFC5V.js": "sha384-XjGeyw35rowrsXdMubw7gIWs+jVL+hJFOg388o3mGQE3umkn+q2ibWjvUNYPUQHV",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/gitGraphDiagram-X574FWY7.2XLQ5S5L.js": "sha384-S7D0KWbYCF6eRmcC8m03E50/x2SktnyR9nZHVzfSu96yvpDQcBos+NBcdmYtHoQF",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.FRXF7VXD.js": "sha384-eHkMe7srZ7+WkrTuZGQj9BeBstDijTm0y0C9YGGwWAGFIpupk3mGJMwnl8jsIMR9",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/ganttDiagram-FUAMR5RP.7ZEJP4BI.js": "sha384-cYAInY08KTX0FX4+WzsU7FhumPhlYOEDNk9tzYSw1qj3Cc/j69xmd4ox9xrdmjk8",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/infoDiagram-VRGFBTTK.3IQ4OLYX.js": "sha384-aPrxCoVsHpzd1TcImzAZixuuVnL17BONgVo8heeb3CI1ibWooKxKxF7HRA98oAaj",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/pieDiagram-5QR66LMP.MZ3ICI2Z.js": "sha384-XHqqqnNVEKoQSE/yDfCztrEGRDxLj7qu14L/P9qHPPMR1fkY4DpaeeIKChwAGlvx",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.3AGCS57Q.js": "sha384-q/VJvK//erftu0fxj0VXChfCvFnVcs+msYV8JxqZoD7JyFiSYEfYoD4xXxKTMAfz",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.MCDKLXN7.js": "sha384-VcZlAD/EM/n+gGLq6ZkRtKpw1JN1uyduVw8gGs4tUen29rzlL7y6VK34knMLk8wm",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.ER6R74N6.js": "sha384-/m5GbNDifKv0hiBvH49dWBAV5JhOIpA0naB5I0OSi9gHAvMxG/0yuHC8CZtoOoeS",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/quadrantDiagram-O4NWA36T.WNOYWOL2.js": "sha384-r5mDkO2iUcg/d4/rVxwPR7B6HLH8oyFFNo6Dl0Crnbus/mpN2EOJhbcfles/DaqJ",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/xychartDiagram-PMCCYNJV.UL62VLWH.js": "sha384-3AEqu6MpeUrUZoU4Fm6qtPvRhCBPXz41L73X561htVT6ad2pC9snkJeLKjR5sFwo",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.ILDXCZ6J.js": "sha384-bDw67ztQmNY0Xi3h4DFrAXCe3HfpnYEMPtPkIdq6RmCsk1RiHX5kVMOnWSwRleyA",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/requirementDiagram-PLB6GJNP.HNP7DW64.js": "sha384-K5fHt8Q1aaeyhSFHsQLaCNjbLVXhIpazzZDgm06O6xzXEmIu4iNE1N0+aawb8HrX",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/eventmodeling-K75KTNOO.PLXX4G35.js": "sha384-zf6J7sl821yrXsUMMQskJegNw+BHWrsNqK9fzo4SEtZ6n+m9nSypU4ZWROY1lDhq",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.6PZYLWFS.js": "sha384-vkzX0AGHXoQSoCjxSVfVOyDSsEYKdmEMnzhVtK+5/ba0C+wKui89v7UNTxxRzp6V",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/radar-ABXABTNO.M22JYGHM.js": "sha384-5QkQx6RlqG4omBuhmfvKQ6vNlkdeJ0Rnz3/G1hLrN9xCmUz7HRRT7bVz+9NBg30t",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.R3ZT3ZBH.js": "sha384-+fv9FCppqu7ZNAV/c/1DFE1XMCFpUv9e5DHAG0XgfvnDU9ISXSJj5iqZnBSCNbIE",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/railroad-I3PHUGI6.ZJVOX5QM.js": "sha384-9PwthseKxS6+0f5JGQzpbbzAYH7/Oai9YNwKl7OLSYSbkBeiX5KMUqflUu+wzel6",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.5KYLSCBE.js": "sha384-mwwDxyry3aXb8vwhRNNhG5I1wZmakXI9uIi2njbMBSbrIsmKn6LHLwHtmJPuRvw1",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/railroad-ebnf-DWYD2UWJ.YQ4YRGTT.js": "sha384-TbqDl7GuWd0TGXfGyZPfOA8BFmSSWCVtVdTZrnp9gH1Twve8nBxTZvvjFXEM1QKE",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.5LBU7H2Z.js": "sha384-uHuXnG145RwWJVJ3GtYhZHf0db6PQpMp2D2wN0H0LfxYc7EfYmN55qSU0sBhrxFT",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/railroad-abnf-LNEFI6M7.4EBWBBM7.js": "sha384-tnh4jZ4Hv00zgb9p8DDZtxdqRdOkS7TeYZlmvNKZGvb5igwulabTgeYErzvCdcw8",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.GEGDQG7K.js": "sha384-6ld/3gzPo5/sabQNo8BC91yIbZrkqB5nypHeNX0uQdMPOivq5QPaXbExVqfty/vY",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/railroad-peg-JR7BVNR7.WLG4RE5E.js": "sha384-nwmnSd/0uEQwAA8ynCfgS2cZYPbFndbRvPYHxZS5ngDEaFdfMluUll/aw79y0Cq6",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.RPLERVAG.js": "sha384-29O3hnOrI5tSQ4pfrnlJiq2M1EUoVitjfwlUKn8ldva+mVNytIElB+eDd69oieWM",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/treemap-SAJKECNS.H5OBAGVQ.js": "sha384-SxWfctphXxbMUEYSbB16C+7XePWWyrFCgnvRXSvoXYo+q3JdnRNTgtgpfdbfv3sZ",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.S67QB4OU.js": "sha384-JPvJRVzG5sjQ49RMA6YVs+xMiWstFbEKzXUbc5qlT+ynefDSXyNHPgJMi793jTmF",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/wardley-7MLQ67FV.4UWIBYWZ.js": "sha384-dKrpPSuE7naRT94/ueazWJwiEaQeIoYkGOZ7JRkjHmV+Qd2q/XJNXTwmpXt0SgAH",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.4MNFBH3Q.js": "sha384-lMmoC6OC/FvqTqCUKFkIagaqdf1W2QbWLkaeGjnIoJbUF2n7Pyl3vD47tvEP96iD",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/swimlanesDiagram-TC7HE7FX.LTRHO4N3.js": "sha384-mdbGkAwUaSfkIKZ0nuQvYdhg3hxYb1MdUvku2Gt3ioGkr2frXLEqziSlHlQLtVYe",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/erDiagram-OPXOYQCR.QYU5MQB4.js": "sha384-Jlt4Tb/+/+rkYtFyha4NUT6ECdnFG9jwblNJXLs4Boi0u5kEY6AAOluI5OEClAO4",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/info-OHQRW6UA.WBQJVZ2Q.js": "sha384-7sVi2hkBXtVDQ3xdRsw7Rk18ZP7OOLpcEVIcI0OCh8tclgh0/woyWSDKkEWma7Fw",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.PVO3QZCU.js": "sha384-+rdvATWb3Mnh48U8vH1uDHs5NRE5wlaV2kIiRAnPnSFOnjNPQV3BZgA3x/2A/weB",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/packet-JDAUHWVQ.CCP77ZN7.js": "sha384-V0xdLpn+HU2YKg0mUttlEIJOqDoW32prRIoyNxYC62KnPXiosbXlSMag9/h3lr/l",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.4TU3Z2X5.js": "sha384-IyFOTIx8PHrM6QkOjcKYty3xxRF2ftuQKueARk6qUFONU5t+uxEjndAA25dAEQ9K",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/pie-XZMESJXO.27OPOIZR.js": "sha384-pP6wv3uaxa0s04qXBTt5Y84tV9iLJCiVjIeG4bNhIaYeF4s3HpgmaBb34EqcB5E8",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.J7BWGZLU.js": "sha384-82JrU3dqBstN0LgxJiA8eKRfxqM8o8rp47twQZ+fme3W1qhqBG1ryUWf1oxfbhoA",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/treeView-D4JQ5SDB.BXHUL42M.js": "sha384-7+NA+UFv65n+Zy4qGzPalct0bxORXGG37KGzypILefHfZcQKz8dF05q0B9DUl14r",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.GHYMLD7Z.js": "sha384-rLPeLzuhcZukNOJ1PBk3rRVGAD1PMrnzDedJqaEZoP5sLVaDcoZsL3TK5+iVfNjh",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/architecture-WOLXFQ4H.ASY26JPS.js": "sha384-PLTw/ZaY0xBZXm0+LzWnrnPG5MNy2wa0nLxo2OCCEGoYCki+SWo0PlgCzsDbb0MJ",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.NP3U6DQ4.js": "sha384-WF8DAlECSt2RbWWHfDwwTk/Vzc2gr8JCaxgjaHVPPJwLOI3U7D+SkAT4j7+suBBg",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/gitGraph-VSP46ZUC.BZPHJSUA.js": "sha384-xs31Q48F4Oepd0QaSjWeSExwbR0sh40WihDM8fUeW6kXs2P5+i6QSa9aAGxTEVNA",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.KDVMAS6A.js": "sha384-T5IevwKZl+3/p0pd+cT3cHDDHi1wimIjFPAK7pYZrFHOPKMjECrJi+H6tlRcH10t",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.PCT3HGPG.js": "sha384-Kkn7CM4ZvoXZ6LqwePba52/m8IAkvq/A2ETsCOljOHpu5rvUFCiaamLJzu7vWAMU",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/sizeCapture-INFHLROL.2WWMT5RD.js": "sha384-SB3UknWhq4JB8YyzjTwWQGUr20D2rvEYUeh7sdfhl70dKbpGAdjaDV+E81opQhEb",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/elk-276RUBZZ.6AIIEI4T.js": "sha384-gJnBkTxHYDZLou8Y+eEvdYwtb63A0oKZbyv2Mh+llRaYUvbNBCZY2TDqs73g+c1u",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/dagre-6A5THRUB.4SPH53PC.js": "sha384-ghjvE6hOogPQS2kioWQVrpY33TyDzfO6BY8/HPwuTBtQyc2ahhtqA8kF7kgs7vXR",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/swimlanes-2SLR337P.ZCXBKGNF.js": "sha384-ySy4fwekjobaJnCU02vp8gcSIfmQIERR9pNFLnTCvxT0kG2dc35VDzm5aaNKGt1I",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.5USAW3X3.js": "sha384-rPzGk0lZCVQUSVFSgOnrUUI8rhJbE2NlqGt9jI4VmT8g+7L1SQMseuyOBDhoeg7z",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.REZ4KWUR.js": "sha384-H2+cylK6huRrQ+P9MqR6IW0oCRFSPBjab09qhs4+AsVc8jWbCCY656nDJG96/Xgu",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.NCFUUSUI.js": "sha384-/BRbzUUV/o3dPbxpyOZHt9H9Uz7tMyi/TjyGaJDDSUStl8pGsV0mnzCdL+fOCoZJ",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.IDTVSNG6.js": "sha384-hWohresOM/HlVCzEfVymN++npgbvmFoz5XhG9KHJV4B9WnIDuRhayT3U349ONKp4",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/cose-bilkent-JH36ORCC.7AFRY2RV.js": "sha384-9MirUTVPpTO7lCFw7Dmn/QsTC24BtpHaZO/vMm6CCO1NwNh6r4oflJeRGBf3Wxht",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.5NYHDKJZ.js": "sha384-1OihA45GLZu4AgjkI5NfatmxmnIV0FKD1U+IEdhjFLAE3VOuaWC/p+Ax3kSoOESD",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/c4Diagram-YGBWAQC7.R2TRADSB.js": "sha384-WolzQEykR6bpSmKM9l8VygJRB1x8nwB5D5fztXF7Tvp0dgnVOMiLJpi5KTZ6svAX",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/flowDiagram-KWPJA3E3.2FOP5TPL.js": "sha384-Mek1uzvdDbYruw3EM+r9B1R6cwOMg4mERBgryLWO8HaQSLiPiiOVevTcWXRUJ0cY",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.MQEDPU46.js": "sha384-vC3QQ8ODhYISQJSqpYi8f0jDszj0RSnYCGztXDtno5FWymxhrivQAy+mb792kJUY",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/diagram-22UHCM2B.DXHMUIUQ.js": "sha384-y5NiKsNUNQktgqEAP1evNjX9AQcbE4QSWLRKmMSV2BhV8UfI0ER/hzA460aOBMZH",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.2XLO2YLL.js": "sha384-V7SIIZfoyOZXPyMWFEcs1HvBb+ESae7y2m0m2CQtTxfdazkidOvudKLGHt/hFmgO",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.UKTOJBJK.js": "sha384-blNAyfY9u0XrOZz6Rid8HZznEcQMnInPt9gUj9qyKUrlRi3yxgY05gAGb2yNzhp0",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.T66VZ53I.js": "sha384-ncXHmr8dokwvlBJ17jCU9u+LnJjgpPY6NTIqAtDzDaYTiA4FzBRkuDXl6xyv5N5c",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.3FFNG42Q.js": "sha384-3MT707sf771nRbyeXR/CvgzO1+uJchTECN2ItiQkVUqdAsqC2CipLvi8F73GDcjg",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.G5OSRWQJ.js": "sha384-JTTt2sFt5rX9yruMYc9kUvOilTGcOi/SC+K48uGuVvakVCRhDMpDGDhg3KDyz8sn",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.LC42Z4I2.js": "sha384-468at21VMm+Qa2OzBiPJeMni68tYHmv9Up9/IiuNq2fiDGfiGYK3JAJ2HBVX5ltt",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.KALW4YO5.js": "sha384-xaXGTPimtXNCEcvzp5SDc9FoCrz8Aa8vNnXiq+BFqcCCZGaJOtHy4ajDxmsBT8pL",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.YDW3BAYU.js": "sha384-NmGtAeeY5WdK/8R03Qgtd0sR9FkfRRp1LESgJxiE5hMN7uOdpkQMAoZO3SHr8zhi",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.3T7ZHICR.js": "sha384-p0xBdlDz61y2gWm11yAveT7qipKgGhDDHNHjejIFveH0/soCWwZz201g0vHsP49J",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.FAXYGAJF.js": "sha384-447zM5mEy44erPFa2MhIWOhfO8lz16F0UEJPvsDXt3siliSb0x9RHll0PyNeCOq8",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.E5R46H45.js": "sha384-zo92F66rZ/AnBKW5m02c2vrBWYiomSB9+5sDSZE3pD8T3zn2e6aFu4hmB+FrjId9",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.AJWKG6HL.js": "sha384-XuUnZbAILyIz2lGrzrpzy30ljtC7dNgyRzJZxdWQnHfBk0F8LVO3F0IbFyKEqv/Y",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.6QBR2AJ2.js": "sha384-4AAglX4xOX88FeX6ZjaNp3xNmM8A7rVzP29mGaap1jcWq/mxt19/f2fArChc6qcq",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.ZVZWWOV3.js": "sha384-a6a/De2LCHGzc0TfcmSFqbZ9DhF+Bv9t5hYFFtOuVwa30rJia9d2zz+esFabTR4L",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.S7YXN5NG.js": "sha384-FuJPMWuG/O4Sn7CW2Tg7JNLs9KUfy4yZhT7L+jVNGnn8mzaq3pmgdskE8RAxXyV8",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.KNMNDQ5B.js": "sha384-QzNEaffUz8xJc9z9vyIzkMNjIcKfdGEQ0Pk6h1Q00vC2t6nBGZmlyCc+W6i+04MA",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.GBHJRZEX.js": "sha384-4dRJKSlAH5S0uEn/DV3cztVAJN1pWWx+Gem/VtCwPnKU1r7xicZlhxGAJZgRm3m1",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.NPQH56DW.js": "sha384-bbsYbFuOwkOM9mg8YYSLEFag+xSFCmSsSXuXOWrX85Civu/V0nGKRFabZUWx75yv",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.PIQVVRDV.js": "sha384-vhNaeRny+CYfMw6Lc2PgTfvp0MSi065I8s/kgtp9VTczov+WL76Nk217CBhWwMpH",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.L3JPU7VM.js": "sha384-sW/Kr+oFvcVYgqveerg6scAxv0mZ9dqbgD9d8g04wTzMkbQtJiCPp1meSaIwaTQs",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.GLXUU33X.js": "sha384-jsECP0/9iwhz8T3QrcWH6Uv91N61QjezX/EZzrYQVeJ4b1Z9vyQo8uvTEU/vNjMD",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/dist.SM6UMOLP.js": "sha384-/IewyusO2nGpnCLxcQzVY/qgyyi3+ceDv7F/keP4ugL3dUF2va4GxDb76fNYRVTe",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/dist.BVVLL2MS.js": "sha384-SanZ3zvJAK6LYyB7E9AmOwCvKCnP9ceYxOGfgnzK9kYH9jvX3+6TkH/UN/hD9AQE",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/shell.PXMCJAJG.js": "sha384-YCbXvZxmMEgOmMqQ2k1yAVR4G+5wX11sZ2Ezgk2ey+/7nm7UFP1Ty4Q0xFme3Vjz",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/dist.ISGH6DRR.js": "sha384-dNNi4nkyY6EuoqjSLuxKQTusGrtGusuuivVYT3s3frhh+8efI17tvWaWNvlnqfby",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/marked.esm.7NLV4XTH.js": "sha384-dgIPflRNvLWbjo1tE/f6K5jZ7w1v4deOOOvlhouTqxjX9+dSC3Ao5PcDkcdWB3qE",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/purify.es.GA3GMGD4.js": "sha384-N+FMcA5Banzv/cp30w+d/wO3aWqCW+m37jcU3OpDLzXlk8e32NGEJngc0Il5S0h4",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.7GZCV4B7.js": "sha384-prQOURo0mCmaDWDhGJaP5NPsG9pNZBbD75KuS3YUNhUC3kB8iJimkEhmnXuJrRIv",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/fuzzysort.BWQUWO6T.js": "sha384-5SoOFDSsum7W199HrYYhVa7E+DjLxgNedb+MhQJ1tUZcRumHn0HaYb9htHeOilXE",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/katex.D2CCFAQB.js": "sha384-s8E5xQjeC/9Ae3CHgh27+VsFpIAblGi6zBrL3IBw/r7E4dliiVynhl/w6q6YRYMU",
+    "https://assets.oea.jp/apps/editor/vendor/vendor.WGTNV46C.js": "sha384-aZeeQQkhZvYNsv/GY/BdTSx5UT3JFJ7u2PgwpbvESMeXrUU9HYZ27Q8rcgGbtZmd",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/dist.JMSAMI2E.js": "sha384-W6knsnc50W9RjipKGjpEXWYHvaeFZM1S7pG7gQOwQjFzHpXH+3O7rJvLbvY+x3MZ",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/dist.S2AMMZPJ.js": "sha384-eO2h+kx1k6Oj8kK4EX1Sp0aWhDIGTnwAU39clzfNPWyWS+iiCe3ll1b/4cJKd/UI",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/dist.NL3QQ7FY.js": "sha384-yrc6g6ubEdyRoheRBSYxiFR62M0HiiK4d53rd6ks/oCR9+VBnKv58qp563SP+Moy",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/dist.6PQ2SUOF.js": "sha384-Ken/mNXCTkYFsPrxmOJsF5tdg3UuOqqjCv59Xag2y6cPvZVgDDH0mW+re3PBZTo9",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/dist.O6NY2DA7.js": "sha384-7rlD4DfXIeWeabVXwFzyPu3s0TIelh0jWd+w7iOSqX+Wn6GIF9UG7ZmSbBtP7kiy",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.ZJFHDEAJ.js": "sha384-j7NrJ/sc/TRr1br94iRnzDc1S+2spftldNLaEGt1kZIu0Mh7GpBI8HbYLQDmeVKO",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.6MDDKCII.js": "sha384-M+gjrkoQnezHYDeEBpv2rVsnHLBAvknTO33H6oH9K0hRrRl4H14wi+efG9f9JWF5",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.7HOHEQS5.js": "sha384-MOW2+uN+V7xT1jNzP1AiY+ubcPdNltXGvgf3Zqa4IniCBcAG40i/D1Ay5fPP1OXE",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/dist.AGANA7FA.js": "sha384-Dt5nEVcZKiHCgfdQuqGahePTTmsjTqQW+GelbabAlb9qREhMPfSPno0SAY3f9zFu",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.OOUV3LWR.js": "sha384-d4G25O5Px3sQfkN4o70D6RY/Af3VGZGSQbmnn8gMlTytvgZX7RXkfe8ktbKYgOYe",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/dist.W7UN2R7O.js": "sha384-9sP30vKHQUu+XUUiBF/N7OiiSN8T6dhCoqErmi44gSumhfARDRimNy5In2/qvptI",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.MPCHFTKF.js": "sha384-kheCfZrJlgef2T6xUgXNTBLVZqjhDREQZpBlxIhIRDhbCb1VyDvJ5La30W/Szh8/",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.RUN6WTMP.js": "sha384-XUhwdIJLdBehUyYxOoFUbSK15+WJINYb4MJJ+qLU2yCQ7adqLVVsvRDGwe1tc5QN",
+    "https://assets.oea.jp/apps/editor/vendor/chunks/chunk.B25I372X.js": "sha384-GHMhe8IFdmtUvwkiEN9hunCxdWmW7BM7FpN3cBJkwTWctxabU9i3vA9A+S9FPZqL"
+  }
+}
+</script>
+<link rel="modulepreload" href="https://assets.oea.jp/apps/editor/vendor/vendor.WGTNV46C.js" integrity="sha384-aZeeQQkhZvYNsv/GY/BdTSx5UT3JFJ7u2PgwpbvESMeXrUU9HYZ27Q8rcgGbtZmd" crossorigin>
+<link rel="modulepreload" href="https://assets.oea.jp/apps/editor/vendor/chunks/chunk.OOUV3LWR.js" integrity="sha384-d4G25O5Px3sQfkN4o70D6RY/Af3VGZGSQbmnn8gMlTytvgZX7RXkfe8ktbKYgOYe" crossorigin>
+<link rel="modulepreload" href="https://assets.oea.jp/apps/editor/vendor/chunks/chunk.RUN6WTMP.js" integrity="sha384-XUhwdIJLdBehUyYxOoFUbSK15+WJINYb4MJJ+qLU2yCQ7adqLVVsvRDGwe1tc5QN" crossorigin>
+<link rel="modulepreload" href="https://assets.oea.jp/apps/editor/vendor/chunks/chunk.B25I372X.js" integrity="sha384-GHMhe8IFdmtUvwkiEN9hunCxdWmW7BM7FpN3cBJkwTWctxabU9i3vA9A+S9FPZqL" crossorigin>
+<!-- vendor:end -->

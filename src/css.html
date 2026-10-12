@@ -1,0 +1,2253 @@
+<style>
+/* =====================================================================
+   Drive テキストエディタ — 配色
+   HtmlService の IFRAME サンドボックス内で動くので、リセットは自前で持つ。
+   ===================================================================== */
+
+/*
+  配色は VS Code の Dark Modern / Light Modern（現行の既定テーマ）に合わせている。
+  値は VS Code のテーマ定義から取った実際の色。
+
+  ダークが既定で、ライトは :root[data-theme="light"] でトークンを差し替える。
+  data-theme は index.html の <head> にあるインラインスクリプトが
+  最初の描画より前に付け、以降は js 側の Theme が付け替える
+  （'system' のときは OS の prefers-color-scheme を見て light / dark に解決する）。
+  media query ではなく属性にしているのは、システム追従と明示指定を
+  同じ 1 本の経路で扱えるようにするため。
+
+  個別の色をここより下に直書きしないこと。片方のテーマでだけ読めない色が
+  できる。新しい色が要るならトークンを足して両方に値を書く。
+*/
+:root {
+  color-scheme: dark;
+
+  --bg-0: #1f1f1f;   /* エディタ背景 (editor.background) */
+  --bg-1: #181818;   /* サイドバー・ヘッダー・タブバー (sideBar.background) */
+  --bg-2: #313131;   /* 入力欄・カード (input.background) */
+  --bg-3: #2a2d2e;   /* ホバー (list.hoverBackground) */
+  --bg-4: #3c3c3c;   /* アクティブ・境界の強い部分 */
+  --field-bg: #313131;       /* 入力欄。ダークでは --bg-2 と同値、ライトでは白 */
+
+  --fg-0: #cccccc;   /* 主要テキスト (foreground) */
+  --fg-1: #9d9d9d;   /* 副次テキスト (descriptionForeground) */
+  --fg-2: #6e7681;   /* 補助・無効 (disabledForeground) */
+  --fg-hi: #ffffff;  /* 最前面の文字（アクティブなタブ・アクティビティバー） */
+
+  --border: #2b2b2b;         /* panel.border */
+  --border-strong: #3c3c3c;  /* input.border 相当 */
+
+  --accent: #0078d4;         /* focusBorder / progressBar */
+  --accent-hover: #026ec1;
+  --accent-fg: #ffffff;
+  --accent-dim: #04395e;     /* list.activeSelectionBackground */
+  --sel-fg: #ffffff;         /* --accent-dim の上の文字 */
+  --sel-fg-dim: #cfe3f5;     /* 同じく、副次的な文字 */
+  --sel-hit: #7fc4ff;        /* 同じく、あいまい検索の一致部分 */
+  --ok: #89d185;             /* charts.green */
+  --warn: #cca700;           /* editorWarning.foreground */
+  --error: #f14c4c;          /* editorError.foreground */
+  --warn-soft: rgba(224, 177, 83, .09);
+  --error-soft: rgba(239, 111, 111, .16);
+  --error-soft-weak: rgba(239, 111, 111, .09);
+  --error-line: rgba(239, 111, 111, .32);
+
+  /* 覆い（モーダルの後ろ）と影。ライトでは同じ濃さだと重すぎるので薄くする。 */
+  --scrim: rgba(10, 12, 16, .7);
+  --scrim-soft: rgba(0, 0, 0, .3);
+  --shadow-modal: 0 16px 48px rgba(0, 0, 0, .5);
+  --shadow-palette: 0 12px 40px rgba(0, 0, 0, .6);
+  --shadow-menu: 0 10px 32px rgba(0, 0, 0, .55);
+  --shadow-toast: 0 6px 20px rgba(0, 0, 0, .4);
+  --scroll-thumb-hover: #4a515e;
+
+  /* 種別を見分けるためのアイコン色（VS Code の Seti 風に控えめに） */
+  --icon-folder: #dcb67a;
+  --icon-file: #9d9d9d;
+  --icon-pdf: #cc6666;
+  /* 埋め込みビューアの下地。中身（Chrome の PDF ビューア等）が読み込まれるまで見える。 */
+  --viewer-bg: #525659;
+
+  /* 比較ビュー。VS Code の diffEditor.* に合わせた薄い面と、行内差分の下線。 */
+  --diff-del-bg: rgba(255, 108, 108, .13);       /* 左（元）側の変更行 */
+  --diff-del-line: rgba(255, 128, 128, .30);     /* 同じく行内の語 */
+  --diff-del-gutter: #e06c75;
+  --diff-ins-bg: rgba(87, 210, 129, .13);        /* 右（新）側の変更行 */
+  --diff-ins-line: rgba(120, 220, 150, .30);
+  --diff-ins-gutter: #57a860;
+  --diff-collapse-bg: #262626;                   /* 同一部分を畳んだ帯 */
+
+  /* ターミナル。--accent はダークの地の上では暗すぎるので、別の値を持つ。 */
+  --term-cwd: #4ec9b0;        /* プロンプトのパス */
+  --term-cmd: #cccccc;        /* 打った行 */
+  --term-echo-bg: rgba(255, 255, 255, .035);
+
+  --radius: 6px;
+  --header-h: 44px;
+  --statusbar-h: 24px;
+  --sidebar-w: 268px;
+
+  --font-ui: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP",
+             "Yu Gothic UI", Meiryo, sans-serif;
+  --font-mono-default: "SFMono-Regular", "SF Mono", Menlo, Consolas,
+                       "Liberation Mono", "Noto Sans Mono", monospace;
+  /* 設定でフォントを選ぶと、Settings.apply が <html> の style でこれを差し替える
+     （選んだ名前の後ろに --font-mono-default を付けるので、端末に無ければ既定に落ちる）。 */
+  --font-mono: var(--font-mono-default);
+}
+
+/* VS Code Light Modern 相当。上のトークンのうち、色だけを差し替える。 */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg-0: #ffffff;
+  --bg-1: #f8f8f8;
+  --bg-2: #f0f0f0;
+  --bg-3: #e8e8e8;
+  --bg-4: #dcdcdc;
+  --field-bg: #ffffff;
+
+  --fg-0: #3b3b3b;
+  --fg-1: #616161;
+  --fg-2: #767676;
+  --fg-hi: #17181a;
+
+  --border: #e5e5e5;
+  --border-strong: #cecece;
+
+  --accent: #005fb8;
+  --accent-hover: #0258a8;
+  --accent-fg: #ffffff;
+  --accent-dim: #cfe4f7;
+  --sel-fg: #17181a;
+  --sel-fg-dim: #3f5a75;
+  --sel-hit: #0b5fa5;
+  --ok: #1a7f37;
+  /* 警告・エラーは VS Code の値そのままだと白地で薄いので、読める濃さまで落としている。 */
+  --warn: #9a6700;
+  --error: #c72e2e;
+  --warn-soft: rgba(154, 103, 0, .08);
+  --error-soft: rgba(199, 46, 46, .10);
+  --error-soft-weak: rgba(199, 46, 46, .06);
+  --error-line: rgba(199, 46, 46, .28);
+
+  --scrim: rgba(28, 32, 40, .35);
+  --scrim-soft: rgba(28, 32, 40, .18);
+  --shadow-modal: 0 16px 48px rgba(0, 0, 0, .18);
+  --shadow-palette: 0 12px 40px rgba(0, 0, 0, .16);
+  --shadow-menu: 0 10px 32px rgba(0, 0, 0, .14);
+  --shadow-toast: 0 6px 20px rgba(0, 0, 0, .12);
+  --scroll-thumb-hover: #b0b0b0;
+
+  --icon-folder: #c08a2e;
+  --icon-file: #767676;
+  --icon-pdf: #b4413f;
+  --viewer-bg: #e8e8e8;
+
+  --diff-del-bg: rgba(220, 60, 60, .09);
+  --diff-del-line: rgba(210, 50, 50, .26);
+  --diff-del-gutter: #d03a3a;
+  --diff-ins-bg: rgba(30, 150, 70, .10);
+  --diff-ins-line: rgba(26, 140, 60, .26);
+  --diff-ins-gutter: #1a7f37;
+  --diff-collapse-bg: #f0f0f0;
+
+  --term-cwd: #0f766e;
+  --term-cmd: #17181a;
+  --term-echo-bg: rgba(0, 0, 0, .035);
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+/* ----------------------------------------------------------------
+   アイコン（src/icons.html の SVG スプライトを参照）
+
+   stroke ベースなので currentColor で親の文字色に追従する。
+   大きさは 1em を基準にし、必要な場所だけ修飾クラスで上書きする。
+   ---------------------------------------------------------------- */
+.icon {
+  width: 1em;
+  height: 1em;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: -0.14em;
+  pointer-events: none;
+}
+.icon--sm { width: .85em; height: .85em; }
+.icon--lg { width: 1.35em; height: 1.35em; stroke-width: 1.6; }
+
+.icon--folder { color: var(--icon-folder); }
+.icon--file   { color: var(--icon-file); }
+.icon--pdf    { color: var(--icon-pdf); }
+.icon--warn   { color: var(--warn); }
+.icon--muted  { color: var(--fg-2); }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  background: var(--bg-0);
+  color: var(--fg-0);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.app { height: 100%; display: flex; flex-direction: column; }
+.app--dragging { cursor: col-resize; user-select: none; }
+
+/* ---------------------------------------------------------------- */
+/* ボタン・入力                                                      */
+/* ---------------------------------------------------------------- */
+
+.btn {
+  font: inherit;
+  font-size: 12px;
+  color: var(--fg-0);
+  background: var(--bg-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 5px 11px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .12s, border-color .12s;
+}
+.btn:hover:not(:disabled) { background: var(--bg-4); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.btn--primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); font-weight: 600; }
+.btn--primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+.btn--ghost { background: transparent; border-color: transparent; color: var(--fg-1); }
+.btn--ghost:hover:not(:disabled) { background: var(--bg-3); color: var(--fg-0); }
+
+.btn--danger { background: transparent; border-color: var(--error); color: var(--error); }
+.btn--danger:hover:not(:disabled) { background: var(--error-soft); }
+
+.btn--icon {
+  padding: 5px 7px;
+  font-size: 14px;
+  line-height: 0;
+  background: transparent;
+  border-color: transparent;
+  color: var(--fg-1);
+}
+.btn--icon:hover:not(:disabled) { background: var(--bg-3); color: var(--fg-0); }
+
+.input {
+  font: inherit;
+  font-size: 12px;
+  width: 100%;
+  color: var(--fg-0);
+  background: var(--field-bg);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 6px 9px;
+}
+.input:focus { outline: none; border-color: var(--accent); }
+.input::placeholder { color: var(--fg-2); }
+
+/* ---------------------------------------------------------------- */
+/* ヘッダー                                                          */
+/* ---------------------------------------------------------------- */
+
+.header {
+  flex: 0 0 var(--header-h);
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 12px;
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--border);
+}
+.header__left, .header__right { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.header__logo { font-weight: 600; font-size: 13px; white-space: nowrap; }
+.header__folder {
+  color: var(--fg-1);
+  font-size: 12px;
+  max-width: 340px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.header__folder::before { content: "📁 "; }
+.header__user { color: var(--fg-2); font-size: 11px; }
+
+/* 保存ステータス */
+.status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--fg-1); }
+.status__dot { width: 7px; height: 7px; border-radius: 50%; background: var(--fg-2); flex: none; }
+.status[data-state="unsaved"] .status__dot { background: var(--warn); }
+.status[data-state="saving"]  .status__dot { background: var(--accent); animation: pulse 1s ease-in-out infinite; }
+.status[data-state="saved"]   .status__dot { background: var(--ok); }
+.status[data-state="error"]   .status__dot { background: var(--error); }
+.status[data-state="error"]   .status__text { color: var(--error); }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+
+/* ---------------------------------------------------------------- */
+/* メインレイアウト                                                   */
+/* ---------------------------------------------------------------- */
+
+.main { flex: 1 1 auto; display: flex; min-height: 0; }
+
+/* サイドバーとエディタの仕切り。プレビュー側と同じ見た目にそろえる。 */
+.splitter {
+  flex: none;
+  width: 5px;
+  cursor: col-resize;
+  background: var(--border);
+  transition: background .12s;
+}
+.splitter:hover, .splitter--dragging { background: var(--accent-dim); }
+
+/* サイドバーを畳んだ状態。仕切りも一緒に隠す。アクティビティバーは残す。 */
+.app--sidebarHidden .sidebar,
+.app--sidebarHidden .splitter { display: none; }
+
+/* 左端の縦アイコン列 */
+.activity {
+  flex: none;
+  width: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 0;
+  background: var(--bg-1);
+  border-right: 1px solid var(--border);
+}
+.activity__btn {
+  width: 48px;
+  height: 46px;
+  font: inherit;
+  font-size: 16px;
+  line-height: 0;
+  color: var(--fg-2);
+  background: none;
+  border: none;
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  transition: color .12s;
+}
+.activity__btn:hover { color: var(--fg-0); }
+.activity__btn--on { color: var(--fg-hi); border-left-color: var(--accent); }
+.activity__spacer { flex: 1 1 auto; }
+
+/* サイドバー内の各ビュー */
+.pane { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.pane[hidden] { display: none !important; }
+
+.sidebar {
+  flex: 0 0 var(--sidebar-w);
+  width: var(--sidebar-w);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  background: var(--bg-1);
+}
+
+.sidebar__bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 6px 6px 10px;
+  border-bottom: 1px solid var(--border);
+  min-height: 34px;
+}
+
+.sidebar__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fg-2);
+  letter-spacing: .04em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+.crumbs {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 11px;
+  color: var(--fg-2);
+  display: flex;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  align-items: center;
+}
+.crumbs__item {
+  font: inherit;
+  color: var(--fg-1);
+  background: none;
+  border: none;
+  padding: 1px 3px;
+  cursor: pointer;
+  border-radius: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+}
+.crumbs__item:hover { background: var(--bg-3); color: var(--fg-0); }
+.crumbs__item--current { color: var(--fg-0); font-weight: 600; cursor: default; }
+.crumbs__item--current:hover { background: none; }
+.crumbs__sep { flex: none; padding: 0 1px; color: var(--fg-2); }
+
+.sidebar__filter { flex: none; position: relative; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+.input--filter { font-size: 11.5px; padding: 4px 22px 4px 8px; }
+.filter__clear {
+  position: absolute;
+  right: 13px;
+  top: 50%;
+  transform: translateY(-50%);
+  font: inherit;
+  font-size: 13px;
+  line-height: 0;
+  color: var(--fg-2);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+}
+.filter__clear:hover { color: var(--fg-0); background: var(--bg-3); }
+
+.sidebar__list { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; padding: 4px 0; }
+.sidebar__foot {
+  flex: none;
+  padding: 4px 10px;
+  font-size: 10px;
+  color: var(--fg-2);
+  border-top: 1px solid var(--border);
+  min-height: 22px;
+}
+
+/* ツリーの行。ボタンを入れ子にできないので外側は div にする。 */
+.row { display: flex; align-items: center; width: 100%; position: relative; }
+.row:hover { background: var(--bg-3); }
+.row--active { background: var(--accent-dim); color: var(--sel-fg); }
+.row--active:hover { background: var(--accent-dim); }
+.row--disabled:hover { background: none; }
+
+.row__twisty {
+  flex: none;
+  width: 16px;
+  height: 22px;
+  font-size: 13px;
+  line-height: 0;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-2);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: transform .12s;
+}
+.row__twisty:hover { color: var(--fg-0); }
+.row__twisty--open { transform: rotate(90deg); }
+.row__twisty--busy { animation: pulse .8s ease-in-out infinite; }
+.row__twisty--leaf { cursor: default; visibility: hidden; }
+
+.row__main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 4px 4px 0;
+  font: inherit;
+  font-size: 12px;
+  color: var(--fg-0);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+}
+.row--disabled .row__main { color: var(--fg-2); cursor: not-allowed; }
+.row__icon { flex: none; width: 16px; display: inline-flex; align-items: center;
+             justify-content: center; font-size: 14px; }
+.row__name { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row__meta { flex: none; font-size: 10px; color: var(--fg-2); }
+.row--dirty .row__name::after { content: " ●"; color: var(--warn); font-size: 9px; }
+.row--open .row__name { color: var(--accent); }
+
+/* 行の上で直接編集する入力欄（改名・新規作成） */
+.row__edit {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: inherit;
+  font-size: 12px;
+  color: var(--fg-0);
+  background: var(--field-bg);
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  padding: 1px 4px;
+  margin-right: 6px;
+  outline: none;
+}
+.row__edit--invalid { border-color: var(--error); }
+.row--editing { background: var(--bg-3); }
+.row--editing .row__actions { display: none !important; }
+.rowError {
+  padding: 2px 10px 4px 34px;
+  font-size: 10.5px;
+  color: var(--error);
+}
+
+/* キーボードで選んでいる行 */
+.row--cursor .row__main { box-shadow: inset 0 0 0 1px var(--accent); border-radius: 2px; }
+
+.row__actions { flex: none; display: none; align-items: center; gap: 1px; padding-right: 6px; }
+.row:hover .row__actions,
+.row--active .row__actions { display: flex; }
+.row__act {
+  font: inherit;
+  font-size: 13px;
+  line-height: 0;
+  line-height: 1;
+  color: var(--fg-2);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 3px 4px;
+  border-radius: 3px;
+}
+.row__act:hover { color: var(--fg-0); background: var(--bg-4); }
+.row__act--danger:hover { color: var(--error); background: var(--error-soft); }
+
+.rowGroupSep { height: 1px; background: var(--border); margin: 5px 10px; }
+
+/* ドラッグ＆ドロップ */
+.row--dragging { opacity: .4; }
+.row--dropTarget { background: var(--accent-dim); box-shadow: inset 0 0 0 1px var(--accent); }
+.sidebar__list--dropRoot { box-shadow: inset 0 0 0 2px var(--accent-dim); }
+.placeholder { padding: 14px 12px; color: var(--fg-2); font-size: 12px; line-height: 1.6; }
+
+/*
+ * JS から '\n' 入りの案内を出すとき用。HTML に直接書いた .placeholder は
+ * ソースの改行とインデントまで拾ってしまうので、こちらには付けない（<br> を使う）。
+ */
+.placeholder--lines { white-space: pre-line; }
+
+/* セクションの見出しの下に出す案内（ピン留めが空のとき）。
+   一覧全体が空のときの案内と違い、行の並びの一部として読ませたいので詰める。 */
+.placeholder--inline {
+  padding: 5px 12px 7px 34px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* 検索結果 */
+.sresult { border-bottom: 1px solid var(--border); }
+.sresult__head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 5px 10px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--fg-0);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+}
+.sresult__head:hover { background: var(--bg-3); }
+.sresult__name { flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sresult__path {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 10.5px;
+  color: var(--fg-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.stashList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  max-height: 50vh;
+  overflow: auto;
+}
+.stashList__item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+}
+.stashList__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stashList__at { flex: none; color: var(--fg-2); font-size: 11px; }
+.sresult__tag {
+  flex: none;
+  font-size: 10px;
+  color: var(--fg-2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0 4px;
+}
+.sresult__count {
+  flex: none;
+  font-size: 10px;
+  color: var(--fg-1);
+  background: var(--bg-3);
+  border-radius: 9px;
+  padding: 0 6px;
+}
+.shit {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  padding: 2px 10px 2px 28px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-1);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+}
+.shit:hover { background: var(--bg-3); color: var(--fg-0); }
+.shit__line { flex: none; min-width: 30px; text-align: right; color: var(--fg-2); }
+.shit__text { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: pre; }
+
+/* 変更履歴 */
+.rev {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 100%;
+  padding: 6px 10px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--fg-0);
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  cursor: pointer;
+}
+.rev:hover { background: var(--bg-3); }
+.rev__when { font-size: 11.5px; }
+.rev__meta { font-size: 10.5px; color: var(--fg-2); }
+
+/* 版の行。左半分（.rev）で読み込み、右端のボタンで比較する。 */
+.revRow { display: flex; align-items: stretch; border-bottom: 1px solid var(--border); }
+.revRow .rev { border-bottom: none; }
+.rev__diff {
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding: 0 9px;
+  color: var(--fg-2);
+  background: none;
+  border: none;
+  border-left: 1px solid var(--border);
+  cursor: pointer;
+}
+.rev__diff:hover { color: var(--accent); background: var(--bg-3); }
+
+/* 設定 */
+.setting { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+.setting__label { display: block; font-size: 12px; margin-bottom: 3px; }
+.setting__desc { margin: 0 0 6px; font-size: 10.5px; color: var(--fg-2); line-height: 1.6; }
+/* サイドバーは狭いので、収まらない行（置き場所のパスなど）は折り返す。 */
+.setting__row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.setting__row .input { flex: 1 1 auto; }
+.setting__value { flex: none; font-size: 11px; color: var(--fg-1); min-width: 56px; }
+/* 一時メモの置き場所。パスは 1 行に収まらないので、ボタンとは別の段に出す。 */
+.setting__path {
+  flex: 1 1 100%;
+  font-size: 11px;
+  color: var(--fg-1);
+  line-height: 1.6;
+  word-break: break-all;
+}
+.setting input[type="range"] { flex: 1 1 auto; accent-color: var(--accent); }
+.setting input[type="checkbox"] { accent-color: var(--accent); }
+/* フォントの見本と、この端末で見つかったかどうか。 */
+.setting__sample {
+  flex: 1 1 100%;
+  font-family: var(--font-mono);
+  font-size: var(--editor-font-size, 12.5px);
+  padding: 4px 8px;
+  background: var(--bg-2);
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.setting__note { flex: 1 1 100%; margin: 0; font-size: 10.5px; line-height: 1.6; }
+.setting__note--ok { color: var(--ok); }
+.setting__note--warn { color: var(--warn); }
+
+/* ---------------------------------------------------------------- */
+/* エディタ領域                                                       */
+/* ---------------------------------------------------------------- */
+
+.editorPane {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: var(--bg-0);
+}
+
+/* ---------------------------------------------------------------- */
+/* ペインの木                                                         */
+/*                                                                  */
+/* leaf（葉）が 1 枚ぶんのエディタ領域で、split（枝）が入れ子の分割。    */
+/* 比率は flex-grow で持たせているので、境目を動かしても              */
+/* 中の CodeMirror は自分で幅を測り直すだけで済む。                    */
+/* ---------------------------------------------------------------- */
+
+.paneRoot {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  /* ::after で「木全体に対する分割」の目安を出すため。
+     子はどれも static なので、並びには影響しない。 */
+  position: relative;
+}
+
+/* エディタ領域の外周へタブを落としたときの目安。
+   そのペインの中ではなく、いちばん外側に全幅・全高のペインができる。 */
+.paneRoot::after {
+  content: '';
+  position: absolute;
+  z-index: 6;
+  display: none;
+  pointer-events: none;
+  background: var(--accent);
+  opacity: .18;
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+}
+.paneRoot--drop-left::after   { display: block; inset: 0 70% 0 0; }
+.paneRoot--drop-right::after  { display: block; inset: 0 0 0 70%; }
+.paneRoot--drop-top::after    { display: block; inset: 0 0 70% 0; }
+.paneRoot--drop-bottom::after { display: block; inset: 70% 0 0 0; }
+
+.paneNode {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+}
+.paneNode--row { flex-direction: row; }
+.paneNode--col { flex-direction: column; }
+
+.paneLeaf {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-0);
+}
+
+/* 分割しているときだけ、いまどのペインで打鍵が効くのかを出す。
+   1 枚しかないときは今までどおり何も足さない。
+   アクティブなペインを飾るのではなく、そうでないペインのタブを落とす
+   （VS Code と同じで、画面の中でいちばん濃い色が 1 か所だけになる）。 */
+.paneRoot--split .paneLeaf:not(.paneLeaf--active) .tabbar { background: var(--bg-2); }
+.paneRoot--split .paneLeaf:not(.paneLeaf--active) .tab--active {
+  box-shadow: none;
+  color: var(--fg-1);
+}
+
+/* 分割の境目。ドラッグで比率を変える。 */
+.paneSash {
+  flex: none;
+  background: var(--border-strong);
+}
+.paneSash:hover, .paneSash--drag { background: var(--accent-dim); }
+.paneSash--row { width: 5px; cursor: col-resize; }
+.paneSash--col { height: 5px; cursor: row-resize; }
+
+/* タブをペインへドラッグしているときの落とし先。
+   端に寄せると「そちら側へ新しく分割」、真ん中なら「このペインへ移動」。 */
+.paneLeaf__drop {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: none;
+  pointer-events: none;
+  background: var(--accent);
+  opacity: 0.18;
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+}
+.paneLeaf__drop--on { display: block; }
+.paneLeaf__drop--left { right: 50%; }
+.paneLeaf__drop--right { left: 50%; }
+.paneLeaf__drop--top { bottom: 50%; }
+.paneLeaf__drop--bottom { top: 50%; }
+
+.tabbar {
+  flex: none;
+  display: flex;
+  align-items: stretch;
+  gap: 1px;
+  min-height: 32px;
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+/* タブが 0 枚でも隠さない。空いているところのダブルクリックが
+   一時メモの入口なので、的そのものが消えてしまうと使えない。 */
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  max-width: 220px;
+  padding: 0 8px 0 10px;
+  font-size: 12px;
+  color: var(--fg-1);
+  background: var(--bg-1);
+  border: none;
+  border-right: 1px solid var(--border);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tab:hover { background: var(--bg-2); color: var(--fg-0); }
+.tab--active { background: var(--bg-0); color: var(--fg-hi); box-shadow: inset 0 1px 0 var(--accent); }
+.tab--active:hover { background: var(--bg-0); }
+.tab__label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 6px 0;
+}
+.tab__dirty { flex: none; color: var(--warn); font-size: 8px; width: 9px; line-height: 0; }
+.tab__dirty .icon { fill: currentColor; }
+/* セッション復元直後の、まだ本文を読んでいないタブ */
+.tab--unloaded .tab__label { color: var(--fg-2); font-style: italic; }
+.tab__saving { flex: none; color: var(--accent); font-size: 12px; width: 9px; line-height: 0; }
+.tab__saving .icon { animation: spin 1s linear infinite; }
+.tab__close {
+  font: inherit;
+  color: var(--fg-2);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 2px;
+  border-radius: 3px;
+  line-height: 1;
+}
+.tab__close:hover { background: var(--bg-3); color: var(--fg-0); }
+
+/* 一時メモ（保存先が未確定のタブ）。Cmd/Ctrl+S で保存先を決めると外れる。 */
+.tab__temp {
+  flex: none;
+  font-size: 9px;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 3px;
+  color: var(--bg-0);
+  background: var(--fg-2);
+  letter-spacing: .04em;
+}
+.tab--temp.tab--active .tab__temp { background: var(--accent); color: var(--accent-fg); }
+
+/* タブバー右端の「新しい一時メモ」。VS Code の ＋ と同じ位置。 */
+.tabbar__new {
+  flex: none;
+  display: flex;
+  align-items: center;
+  padding: 0 9px;
+  color: var(--fg-2);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.tabbar__new:hover { color: var(--fg-0); background: var(--bg-2); }
+
+.editorHost .cm-editor { height: 100%; }
+/* フォントサイズは設定から差し替えられるよう変数にする（CM6 のテーマ側も同じ変数を見る）。 */
+.editorHost .cm-scroller {
+  font-family: var(--font-mono);
+  font-size: var(--editor-font-size, 12.5px);
+  line-height: 1.55;
+}
+.editorHost .cm-editor.cm-focused { outline: none; }
+
+.empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-0);
+  pointer-events: none;
+}
+.empty__inner { text-align: center; color: var(--fg-2); }
+.empty__icon { font-size: 34px; opacity: .4; line-height: 1; }
+.empty__title { margin: 8px 0 4px; font-size: 13px; color: var(--fg-1); }
+.empty__hint { margin: 0; font-size: 11px; line-height: 1.7; }
+
+.statusbar {
+  flex: none;
+  height: var(--statusbar-h);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 10px;
+  font-size: 11px;
+  color: var(--fg-2);
+  background: var(--bg-1);
+  border-top: 1px solid var(--border);
+}
+.statusbar__sep { opacity: .5; }
+.statusbar__spacer { flex: 1 1 auto; }
+
+/* エディタ上部のパンくず */
+.crumbs--editor {
+  flex: none;
+  padding: 3px 12px;
+  min-height: 22px;
+  font-size: 11.5px;
+  background: var(--bg-0);
+  border-bottom: 1px solid var(--border);
+}
+.crumbs--editor .crumbs__item { max-width: 220px; }
+
+/* 仮タブ（シングルクリックで開いた、まだ固定されていないタブ） */
+.tab--preview .tab__label { font-style: italic; }
+/* ピン留めの印。サイドバーの「ピン留め」に並んでいることを表すので、
+   タブの × は隠さない（「他のタブを閉じる」の対象から外れるだけ）。 */
+.tab__pin { flex: none; font-size: 12px; width: 12px; color: var(--fg-1); line-height: 0; }
+.tab--active .tab__pin { color: var(--accent); }
+
+/* CodeMirror の検索／置換パネル。
+   CM6 の入力欄は <input class="cm-textfield" name="search"> で type 属性を持たない。
+   input[type="text"] では当たらないので必ずクラスで指定すること。
+   また base theme が font-size:70% を当てるため、明示的に戻す必要がある。 */
+:is(.editorHost, .diffPane) .cm-panels { background: var(--bg-1); color: var(--fg-0); border-color: var(--border); }
+:is(.editorHost, .diffPane) .cm-panels.cm-panels-top { border-bottom: 1px solid var(--border); }
+
+:is(.editorHost, .diffPane) .cm-panel.cm-search,
+:is(.editorHost, .diffPane) .cm-panel.cm-gotoLine {
+  padding: 9px 12px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 2.3;
+}
+
+/* 入力欄（検索 / 置換後 / 行番号） */
+:is(.editorHost, .diffPane) .cm-panel .cm-textfield {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  width: 200px;
+  color: var(--fg-0);
+  background: var(--field-bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  padding: 5px 9px;
+  margin: 0 6px 0 0;
+  vertical-align: middle;
+}
+:is(.editorHost, .diffPane) .cm-panel.cm-search .cm-textfield { width: 320px; max-width: 38vw; }
+:is(.editorHost, .diffPane) .cm-panel .cm-textfield:focus { outline: none; border-color: var(--accent); }
+:is(.editorHost, .diffPane) .cm-panel .cm-textfield::placeholder { color: var(--fg-2); }
+
+/* ボタン */
+:is(.editorHost, .diffPane) .cm-panel .cm-button {
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  color: var(--fg-0);
+  background: var(--bg-3);
+  background-image: none;
+  border: 1px solid var(--border-strong);
+  border-radius: 5px;
+  padding: 5px 10px;
+  margin-right: 5px;
+  vertical-align: middle;
+  cursor: pointer;
+}
+:is(.editorHost, .diffPane) .cm-panel .cm-button:hover { background: var(--bg-4); }
+:is(.editorHost, .diffPane) .cm-panel .cm-button:active { background: var(--accent-dim); }
+
+/* チェックボックスとそのラベル */
+:is(.editorHost, .diffPane) .cm-panel.cm-search label {
+  font-size: 11.5px;
+  color: var(--fg-1);
+  margin-left: 10px;
+  white-space: nowrap;
+  vertical-align: middle;
+  cursor: pointer;
+}
+:is(.editorHost, .diffPane) .cm-panel.cm-search input[type="checkbox"] {
+  margin: 0 4px 0 0;
+  vertical-align: middle;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* 閉じるボタン（右上に絶対配置されている） */
+:is(.editorHost, .diffPane) .cm-panel.cm-search [name="close"] {
+  color: var(--fg-1);
+  background: none;
+  border: none;
+  font-size: 18px;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+:is(.editorHost, .diffPane) .cm-panel.cm-search [name="close"]:hover { color: var(--fg-0); background: var(--bg-3); }
+
+/* 画面が狭いときは入力欄を縮める */
+@media (max-width: 900px) {
+  :is(.editorHost, .diffPane) .cm-panel.cm-search .cm-textfield { width: 180px; }
+}
+
+/* ---------------------------------------------------------------- */
+/* オーバーレイ共通                                                   */
+/* ---------------------------------------------------------------- */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--bg-0);
+}
+.overlay--modal { background: var(--scrim); z-index: 60; }
+
+.overlay__box { text-align: center; color: var(--fg-1); max-width: 520px; }
+.overlay__hint { font-size: 11px; color: var(--fg-2); }
+.overlay__error {
+  margin: 12px 0;
+  padding: 10px 12px;
+  font-size: 12px;
+  text-align: left;
+  color: var(--error);
+  background: var(--error-soft-weak);
+  border: 1px solid var(--error-line);
+  border-radius: var(--radius);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.spinner {
+  width: 22px;
+  height: 22px;
+  margin: 0 auto 10px;
+  border: 2px solid var(--bg-4);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------------------------------------------------------------- */
+/* フォルダ選択                                                       */
+/* ---------------------------------------------------------------- */
+
+.picker {
+  width: min(860px, 100%);
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-1);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.picker__head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.picker__title { margin: 0; font-size: 15px; font-weight: 600; }
+.picker__note {
+  flex: none;
+  margin: 0;
+  padding: 9px 18px;
+  font-size: 12px;
+  color: var(--warn);
+  background: var(--warn-soft);
+  border-bottom: 1px solid var(--border);
+}
+.picker__current {
+  flex: none;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-0);
+}
+.rootList { display: flex; flex-direction: column; gap: 4px; max-height: 132px; overflow-y: auto; }
+.rootList__empty { font-size: 12px; color: var(--fg-2); }
+.rootRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px 4px 8px;
+  font-size: 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.rootRow__name { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rootRow__remove {
+  flex: none;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--fg-2);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+.rootRow__remove:hover { color: var(--error); background: var(--error-soft); }
+
+/* ツリーの最上位（ルートフォルダ）は見出しとして目立たせる */
+.row--treeRoot { background: var(--bg-2); }
+.row--treeRoot .row__name { font-weight: 600; }
+.row--treeRoot:hover { background: var(--bg-3); }
+/* 「一時メモ」はユーザーが外せない固定セクション。色で通常のルートと分ける。 */
+.row--tmpRoot .row__name { color: var(--fg-1); }
+.row--tmpRoot .row__icon { color: var(--accent); }
+/* 「ピン留め」も同じ扱いの固定セクション（Drive 上のフォルダではない）。 */
+.row--pinRoot .row__name { color: var(--fg-1); }
+.row--pinRoot .row__icon { color: var(--accent); }
+/* ピン留めの行は元のフォルダにも同じファイルが並ぶので、別物だと分かるようにする。 */
+.row--pin .row__meta { font-style: italic; }
+
+.picker__body { flex: 1 1 auto; display: flex; min-height: 0; }
+.picker__col {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 18px;
+}
+.picker__col--narrow { flex: 0 0 320px; border-left: 1px solid var(--border); }
+.picker__label { margin: 0 0 8px; font-size: 11px; font-weight: 600; color: var(--fg-2); letter-spacing: .04em; }
+.picker__desc { margin: 0 0 8px; font-size: 11px; color: var(--fg-2); line-height: 1.6; }
+.picker__inputRow { display: flex; gap: 6px; }
+.picker__resolved {
+  margin-top: 10px;
+  padding: 9px 11px;
+  font-size: 12px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  word-break: break-word;
+}
+.picker__resolved--error { color: var(--error); border-color: var(--error-line); }
+/* 一時メモの置き場所。初回はこの画面しか出ないので、ここからも変えられるようにする。 */
+.picker__tmp {
+  flex: none;
+  padding: 12px 18px;
+  border-top: 1px solid var(--border);
+}
+.picker__tmpRow { display: flex; align-items: center; gap: 8px; }
+.picker__tmpPath {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--fg-1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.picker__tmp .picker__desc { margin: 8px 0 0; }
+.picker__foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-2);
+}
+.picker__selected { font-size: 12px; color: var(--fg-1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 保存先を選ぶモードでだけ出る、ファイル名の入力欄 */
+.picker__name { flex: 1 1 auto; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.picker__nameLabel { flex: none; font-size: 11px; font-weight: 600; color: var(--fg-2); }
+.picker__name .input { flex: 1 1 auto; min-width: 0; max-width: 380px; }
+/* クリックで選べる候補行（保存先を選ぶモード） */
+.rootRow--pick { cursor: pointer; text-align: left; width: 100%; font: inherit; color: inherit; }
+.rootRow--pick:hover { background: var(--bg-3); }
+.rootRow--picked { border-color: var(--accent); }
+.rootRow__meta { flex: none; font-size: 11px; color: var(--fg-2); }
+
+/* フォルダツリー */
+.tree {
+  flex: 1 1 auto;
+  min-height: 220px;
+  max-height: 44vh;
+  overflow: auto;
+  padding: 4px;
+  background: var(--bg-0);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.tree__node { }
+.tree__rowWrap { display: flex; align-items: center; }
+.tree__toggle {
+  flex: none;
+  width: 18px;
+  height: 20px;
+  font: inherit;
+  font-size: 9px;
+  color: var(--fg-2);
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 3px;
+  transition: transform .12s;
+}
+.tree__toggle:hover { color: var(--fg-0); background: var(--bg-3); }
+.tree__toggle--open { transform: rotate(90deg); }
+.tree__toggle--busy { animation: pulse .8s ease-in-out infinite; }
+.tree__label {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 2px 6px;
+  font: inherit;
+  font-size: 12px;
+  color: var(--fg-0);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 3px;
+}
+.tree__label:hover { background: var(--bg-3); }
+.tree__label--selected { background: var(--accent-dim); }
+.tree__labelText { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tree__children { margin-left: 14px; border-left: 1px solid var(--border); padding-left: 2px; }
+.tree__note { padding: 2px 8px 2px 20px; font-size: 11px; color: var(--fg-2); }
+
+/* ---------------------------------------------------------------- */
+/* モーダル                                                          */
+/* ---------------------------------------------------------------- */
+
+.modal {
+  width: min(520px, 100%);
+  background: var(--bg-1);
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  padding: 18px 20px 16px;
+  box-shadow: var(--shadow-modal);
+}
+.modal__title { margin: 0 0 10px; font-size: 14px; font-weight: 600; }
+.modal__body { font-size: 12.5px; color: var(--fg-1); line-height: 1.75; word-break: break-word; }
+.modal__body code {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  background: var(--bg-2);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+.modal__actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.modal__label { display: block; margin-bottom: 6px; font-size: 11px; color: var(--fg-2); }
+.modal__input { font-family: var(--font-mono); }
+.modal__error { margin-top: 8px; font-size: 11.5px; color: var(--error); }
+
+.keys { width: 100%; border-collapse: collapse; font-size: 12px; }
+.keys th {
+  text-align: left;
+  padding: 8px 0 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--fg-2);
+  letter-spacing: .05em;
+  border-bottom: 1px solid var(--border);
+}
+.keys td { padding: 3px 0; vertical-align: top; color: var(--fg-1); }
+.keys td:first-child { width: 168px; padding-right: 12px; }
+.keys kbd {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-0);
+  background: var(--bg-3);
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 1px 5px;
+  white-space: nowrap;
+}
+.modal--wide { width: min(620px, 100%); }
+.modal--wide .modal__body { max-height: 62vh; overflow-y: auto; }
+
+/* ---------------------------------------------------------------- */
+/* コマンドパレット / クイックオープン                                 */
+/* ---------------------------------------------------------------- */
+
+.palette {
+  position: fixed;
+  inset: 0;
+  z-index: 68;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 68px;
+  background: var(--scrim-soft);
+}
+.palette__box {
+  width: min(620px, calc(100% - 32px));
+  max-height: calc(100vh - 140px);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  box-shadow: var(--shadow-palette);
+  overflow: hidden;
+}
+.palette__input {
+  flex: none;
+  font: inherit;
+  font-size: 13px;
+  color: var(--fg-0);
+  background: var(--field-bg);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  margin: 8px;
+  padding: 6px 9px;
+  outline: none;
+}
+.palette__input::placeholder { color: var(--fg-2); }
+.palette__list { flex: 1 1 auto; overflow-y: auto; padding: 0 4px 4px; min-height: 0; }
+.palette__foot {
+  flex: none;
+  padding: 5px 12px;
+  font-size: 10.5px;
+  color: var(--fg-2);
+  border-top: 1px solid var(--border);
+}
+.palette__foot:empty { display: none; }
+
+.pitem {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  width: 100%;
+  padding: 5px 9px;
+  font: inherit;
+  font-size: 12.5px;
+  color: var(--fg-0);
+  background: none;
+  border: none;
+  border-radius: 3px;
+  text-align: left;
+  cursor: pointer;
+}
+.pitem--on { background: var(--accent-dim); color: var(--sel-fg); }
+.pitem__icon { flex: none; width: 16px; font-size: 14px; display: inline-flex;
+               align-items: center; justify-content: center; opacity: .9; }
+.pitem__label { flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pitem__hint {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 11px;
+  color: var(--fg-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pitem--on .pitem__hint { color: var(--sel-fg-dim); }
+.pitem__key { flex: none; font-size: 10.5px; color: var(--fg-2); }
+.pitem--on .pitem__key { color: var(--sel-fg-dim); }
+.pitem__hit { color: var(--accent); font-weight: 600; }
+.pitem--on .pitem__hit { color: var(--sel-hit); }
+.palette__empty { padding: 14px 12px; font-size: 12px; color: var(--fg-2); }
+
+/* ---------------------------------------------------------------- */
+/* 右クリックメニュー                                                 */
+/* ---------------------------------------------------------------- */
+
+.ctxmenu {
+  position: fixed;
+  z-index: 65;
+  min-width: 196px;
+  padding: 4px;
+  background: var(--bg-2);
+  border: 1px solid var(--border-strong);
+  border-radius: 7px;
+  box-shadow: var(--shadow-menu);
+  font-size: 12px;
+}
+.ctxmenu__item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 6px 10px;
+  font: inherit;
+  color: var(--fg-0);
+  background: none;
+  border: none;
+  border-radius: 4px;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ctxmenu__item:hover:not(:disabled) { background: var(--bg-4); }
+.ctxmenu__item:disabled { color: var(--fg-2); cursor: default; }
+.ctxmenu__item--danger:hover:not(:disabled) { background: var(--error-soft); color: var(--error); }
+.ctxmenu__icon { flex: none; width: 15px; font-size: 14px; display: inline-flex;
+                 align-items: center; justify-content: center; opacity: .9; }
+.ctxmenu__key { margin-left: auto; padding-left: 16px; font-size: 10.5px; color: var(--fg-2); }
+.ctxmenu__sep { height: 1px; margin: 4px 6px; background: var(--border); }
+
+/* ---------------------------------------------------------------- */
+/* 埋め込みビューア / プレビュー                                       */
+/* ---------------------------------------------------------------- */
+
+.panes { flex: 1 1 auto; min-height: 0; display: flex; }
+.editorHost { flex: 1 1 50%; min-width: 0; min-height: 0; overflow: hidden; }
+
+/* プレビュータブの置き場所。ペインの中で本文と入れ替わる。 */
+.previewHost {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  background: var(--bg-0);
+}
+
+.preview {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  background: var(--bg-0);
+}
+.preview__body {
+  padding: 20px 26px 60px;
+  max-width: 860px;
+  /* 共有された .md の position: fixed や大きな z-index がプレビューの外
+     （タブバー・ダイアログ）に重ならないよう、固定配置の基準と重なり順をここで閉じる。 */
+  contain: layout;
+  isolation: isolate;
+}
+/* 外部の画像を止めている間の枠。alt を出して、そこに画像があることだけ分かるようにする。 */
+.preview__body img.mdimg--held {
+  display: inline-block;
+  min-width: 120px;
+  min-height: 28px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: var(--fg-2);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+}
+
+/* HTML / drawio プレビュー。iframe 自身がスクロールするので、外側は固定にする。 */
+.preview--frame { overflow: hidden; display: flex; flex-direction: column; }
+/* HTML プレビューの上端。スクリプトを動かしているかを常に見せ、切り替えられるようにする。 */
+.preview__bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: var(--fg-1);
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--border);
+}
+.preview__bar[hidden] { display: none; }
+/* Markdown はプレビュー全体がスクロールするので、バーは上端に留める。 */
+.preview:not(.preview--frame) > .preview__bar { position: sticky; top: 0; z-index: 2; }
+.preview__bar--on { color: var(--fg-0); background: var(--warn-soft); }
+.preview__barMsg { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.preview__barBtn { flex: none; padding: 2px 9px; }
+/* HTML プレビューだけはテーマに追従させない。中身はユーザーが書いた
+   1 ファイル完結の HTML で、その中の色指定は白地を前提にしていることが多い。 */
+.preview__frame { flex: 1 1 auto; width: 100%; border: none; background: #ffffff; }
+.preview__frame--drawio { background: var(--bg-0); }
+.preview__fallback { flex: 1 1 auto; padding: 20px; font-size: 12px; line-height: 1.9; color: var(--fg-2); }
+
+/* 表プレビュー（CSV / TSV）。行の高さは CsvGrid.ROW_H と同じ 26px に固定する
+   （見えている行だけを描くので、高さが揺れるとスクロール位置がずれる）。 */
+.csvgrid { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.csvgrid[hidden] { display: none; }
+.csvgrid__bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  padding: 5px 10px;
+  font-size: 12px;
+  color: var(--fg-1);
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--border);
+}
+.csvgrid__opt { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+.csvgrid__info { margin-left: auto; color: var(--fg-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.csvgrid__info--warn { color: var(--error); }
+.csvgrid__filter { width: 180px; min-width: 0; padding: 2px 8px; font-size: 12px; }
+.csvgrid__filterCol { max-width: 160px; padding: 2px 6px; font-size: 12px; }
+.csvgrid__th { cursor: pointer; user-select: none; }
+.csvgrid__th:hover { color: var(--fg-0); background: var(--bg-3); }
+.csvgrid__th--sorted { color: var(--fg-0); }
+.csvgrid__thLabel { overflow: hidden; text-overflow: ellipsis; }
+.csvgrid__sortMark { margin-left: 4px; font-size: 9px; color: var(--accent); }
+.csvgrid__scroll { position: relative; flex: 1 1 auto; min-height: 0; overflow: auto; outline: none; }
+.csvgrid__add { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; font-size: 12px; }
+/* 選んでいるセル。表にフォーカスが無いときは薄くする。 */
+.csvgrid__td--sel { box-shadow: inset 0 0 0 2px var(--accent-dim); }
+.csvgrid__scroll:focus-within .csvgrid__td--sel { box-shadow: inset 0 0 0 2px var(--accent); }
+/* セルの編集欄。表の中に置くので、スクロールしても一緒に動く。 */
+.csvgrid__editor {
+  position: absolute;
+  z-index: 5;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 4px 7px;
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 17px;
+  color: var(--fg-0);
+  background: var(--field-bg);
+  border: 2px solid var(--accent);
+  border-radius: 0;
+  outline: none;
+  resize: none;
+  overflow: auto;
+  box-shadow: var(--shadow-menu);
+}
+/* セルを選んでいるだけのとき。キー（と IME の変換）を受けるために、見えないまま
+   選んでいるセルの上に置いておく。押した位置のセルに届くよう、マウスは素通しにする。 */
+.csvgrid__editor--idle {
+  opacity: 0;
+  pointer-events: none;
+  caret-color: transparent;
+  box-shadow: none;
+  overflow: hidden;
+}
+.csvgrid__table {
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--fg-0);
+}
+.csvgrid__table th,
+.csvgrid__table td {
+  height: 26px;
+  box-sizing: border-box;
+  padding: 0 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.csvgrid__table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  color: var(--fg-1);
+  background: var(--bg-2);
+  border-bottom-color: var(--border-strong);
+}
+.csvgrid__corner { left: 0; z-index: 3 !important; }
+.csvgrid__rownum {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  font-weight: 400;
+  text-align: right !important;
+  color: var(--fg-2);
+  background: var(--bg-1);
+  cursor: pointer;
+}
+.csvgrid__rownum:hover { color: var(--accent); }
+.csvgrid__num { text-align: right !important; font-variant-numeric: tabular-nums; }
+.csvgrid__td--missing { background: var(--bg-1); }
+.csvgrid__spacer td { padding: 0; border: none; }
+.csvgrid__empty { color: var(--fg-2); font-family: var(--font-ui); }
+
+/* ---------------------------------------------------------------- */
+/* Markdown の入力バー                                                */
+/* ---------------------------------------------------------------- */
+
+.mdbar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  padding: 4px 8px;
+  overflow-x: auto;
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--border);
+}
+/* ボタンが多いので、狭いときは横スクロールさせる（折り返さない）。 */
+.mdbar::-webkit-scrollbar { height: 6px; }
+.mdbar__btn {
+  flex: none;
+  font: inherit;
+  font-size: 11.5px;
+  line-height: 1.6;
+  min-width: 24px;
+  padding: 1px 7px;
+  color: var(--fg-1);
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.mdbar__btn:hover { background: var(--bg-3); color: var(--fg-0); }
+.mdbar__btn:active { background: var(--bg-4); }
+.mdbar__btn--bold { font-weight: 700; }
+.mdbar__btn--italic { font-style: italic; }
+.mdbar__btn--strike { text-decoration: line-through; }
+.mdbar__btn--mono { font-family: var(--font-mono); }
+.mdbar__sep {
+  flex: none;
+  width: 1px;
+  align-self: stretch;
+  margin: 2px 5px;
+  background: var(--border-strong);
+}
+
+/* タブバーの高さは可変なので絶対配置にせず、.panes と入れ替わる flex 要素にする。 */
+.viewerHost {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-0);
+}
+.viewerHost__bar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--fg-1);
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--border);
+}
+.viewerHost__kind { color: var(--fg-2); }
+.viewerHost__frame { flex: 1 1 auto; width: 100%; border: none; background: var(--viewer-bg); }
+.viewerHost__fallback { padding: 20px; font-size: 12px; color: var(--fg-2); }
+
+/* ---------------------------------------------------------------- */
+/* 比較ビュー（@codemirror/merge）                                    */
+/*                                                                  */
+/* MergeView は外側（.cm-mergeView）が 1 つのスクロール領域になり、    */
+/* 中の 2 つのエディタは height:auto で並ぶ。左右のスクロールは        */
+/* 構造上ずれない（自前で連動させる必要がない）。                      */
+/* ---------------------------------------------------------------- */
+
+.diffHost {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-0);
+}
+
+.diffbar {
+  flex: none;
+  background: var(--bg-1);
+  border-bottom: 1px solid var(--border);
+}
+.diffbar__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  min-height: 30px;
+}
+.diffbar__row + .diffbar__row { border-top: 1px solid var(--border); }
+/* ボタンが多いので、狭いときは横スクロールさせる（mdbar と同じ方針）。 */
+.diffbar__row--tools { overflow-x: auto; }
+.diffbar__row--tools::-webkit-scrollbar { height: 6px; }
+.diffbar__spacer { flex: 1 1 auto; min-width: 4px; }
+
+/* 左右の材料。押すとソースを選ぶメニューが出る。 */
+.diffsrc {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-align: left;
+  font: inherit;
+  font-size: 11.5px;
+  color: var(--fg-0);
+  background: var(--field-bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  padding: 3px 7px;
+  cursor: pointer;
+}
+.diffsrc:hover { background: var(--bg-3); }
+.diffsrc__side {
+  flex: none;
+  font-size: 9.5px;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 3px;
+  background: var(--bg-4);
+  color: var(--fg-1);
+  letter-spacing: .04em;
+}
+.diffsrc--a .diffsrc__side { background: var(--diff-del-gutter); color: #ffffff; }
+.diffsrc--b .diffsrc__side { background: var(--diff-ins-gutter); color: #ffffff; }
+.diffsrc__name {
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.diffsrc__sub {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--fg-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.diffsrc__dirty { flex: none; color: var(--warn); font-size: 8px; line-height: 0; }
+.diffsrc__dirty .icon { fill: currentColor; }
+.diffsrc__chev { flex: none; color: var(--fg-2); }
+
+/* 差分の件数。同一なら緑で「同じ」と出す。 */
+.diffstat {
+  flex: none;
+  font-size: 11px;
+  color: var(--fg-1);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.diffstat__del { color: var(--diff-del-gutter); }
+.diffstat__ins { color: var(--diff-ins-gutter); }
+.diffstat__same { color: var(--ok); display: flex; align-items: center; gap: 4px; }
+.diffstat__warn { color: var(--warn); }
+
+.diffBody { flex: 1 1 auto; min-height: 0; display: flex; }
+.diffPane { flex: 1 1 auto; min-width: 0; min-height: 0; display: flex; }
+.diffPane .cm-mergeView { flex: 1 1 auto; min-width: 0; height: 100%; }
+/* 内容が画面より短いとき、MergeView の中のエディタは内容ぶんの高さで終わり、
+   行番号の列も中央の反映ボタンの帯も途中で切れる。下まで伸ばして、
+   比較の領域が画面の上半分だけに見えないようにする。 */
+.diffPane .cm-mergeViewEditors { min-height: 100%; align-items: stretch; }
+.diffPane .cm-mergeViewEditor { display: flex; }
+.diffPane .cm-mergeViewEditor > .cm-editor { flex: 1 1 auto; min-width: 0; }
+/* インライン表示ではエディタが .diffPane の直接の子になる。flex の既定は
+   0 1 auto で、幅が中身なりに縮んでしまうので伸ばしておく
+   （並列表示では .cm-mergeView が伸び、中のエディタは merge 側の
+   baseTheme が height:auto !important を当てる）。 */
+.diffPane > .cm-editor { flex: 1 1 auto; min-width: 0; }
+.diffPane .cm-editor { height: 100%; }
+.diffPane .cm-editor.cm-focused { outline: none; }
+.diffPane .cm-scroller {
+  font-family: var(--font-mono);
+  font-size: var(--editor-font-size, 12.5px);
+  line-height: 1.55;
+}
+
+/* 変更行・行内の語。merge の既定色（オレンジ／緑の固定値）をテーマに合わせて上書きする。 */
+.diffPane .cm-merge-a .cm-changedLine,
+.diffPane .cm-deletedChunk { background: var(--diff-del-bg); }
+.diffPane .cm-merge-b .cm-changedLine,
+.diffPane .cm-inlineChangedLine { background: var(--diff-ins-bg); }
+.diffPane .cm-merge-a .cm-changedText,
+.diffPane .cm-deletedChunk .cm-deletedText {
+  background: linear-gradient(var(--diff-del-line), var(--diff-del-line)) bottom/100% 2px no-repeat;
+}
+.diffPane .cm-merge-b .cm-changedText {
+  background: linear-gradient(var(--diff-ins-line), var(--diff-ins-line)) bottom/100% 2px no-repeat;
+}
+.diffPane .cm-merge-b .cm-deletedText { background: var(--diff-del-line); }
+.diffPane .cm-merge-a .cm-changedLineGutter,
+.diffPane .cm-deletedLineGutter { background: var(--diff-del-gutter); }
+.diffPane .cm-merge-b .cm-changedLineGutter { background: var(--diff-ins-gutter); }
+
+/* 同一部分を畳んだ帯。 */
+.diffPane .cm-collapsedLines {
+  color: var(--fg-1);
+  background: linear-gradient(to bottom, transparent 0,
+    var(--diff-collapse-bg) 30%, var(--diff-collapse-bg) 70%, transparent 100%);
+  font-family: var(--font-ui);
+  font-size: 11px;
+}
+
+/* 片側へコピーするボタン（⇜ / ⇝）。 */
+.diffPane .cm-merge-revert { background: var(--bg-1); border-inline: 1px solid var(--border); }
+.diffPane .cm-merge-revert button {
+  color: var(--fg-2);
+  font-size: 14px;
+  line-height: 1.2;
+}
+.diffPane .cm-merge-revert button:hover { color: var(--accent); background: var(--bg-3); }
+
+/* インライン表示の取り込む／戻すボタン。 */
+.diffPane .cm-deletedChunk .cm-chunkButtons button {
+  font: inherit;
+  font-size: 10.5px;
+  padding: 0 6px;
+}
+.diffPane .cm-deletedChunk .cm-chunkButtons button[name="accept"] { background: var(--diff-ins-gutter); }
+.diffPane .cm-deletedChunk .cm-chunkButtons button[name="reject"] { background: var(--diff-del-gutter); }
+
+/* 下段のボタンは Markdown の入力バーと同じ見た目を使う（.mdbar__btn）。
+   押した状態だけここで足す。 */
+.diffbar .mdbar__btn--on {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--fg-0);
+}
+.diffbar .mdbar__btn:disabled { color: var(--fg-2); cursor: default; background: none; }
+.diffbar .mdbar__btn--icon { display: flex; align-items: center; gap: 4px; }
+
+/* 貼り付け用のモーダル（テキストを直接入れる）。 */
+.diffPaste {
+  width: 100%;
+  min-height: 220px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--fg-0);
+  background: var(--field-bg);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  padding: 8px;
+  resize: vertical;
+}
+.diffPaste:focus { outline: none; border-color: var(--accent); }
+
+/* ソース選択モーダルの一覧。 */
+.diffPick { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.diffPick__list {
+  max-height: 46vh;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.diffPick__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  color: var(--fg-0);
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  padding: 6px 9px;
+  cursor: pointer;
+}
+.diffPick__item:last-child { border-bottom: none; }
+.diffPick__item:hover { background: var(--bg-3); }
+.diffPick__name { flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.diffPick__hint {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--fg-2);
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.diffPick__icon { flex: none; display: flex; color: var(--fg-2); }
+.diffPick__empty { padding: 14px 10px; font-size: 12px; color: var(--fg-2); line-height: 1.7; }
+
+/* タブの種別バッジ（比較・プレビュー・ターミナル）。本文を持たないタブの目印。 */
+.tab__diff, .tab__pv, .tab__term {
+  flex: none;
+  font-size: 9px;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 3px;
+  color: var(--bg-0);
+  background: var(--fg-2);
+  letter-spacing: .04em;
+}
+.tab--diff.tab--active .tab__diff,
+.tab--term.tab--active .tab__term,
+.tab--pv.tab--active .tab__pv { background: var(--accent); color: var(--accent-fg); }
+.tab__term { font-family: var(--font-mono); letter-spacing: 0; }
+
+.statusbar__btn {
+  font: inherit;
+  font-size: 11px;
+  color: var(--fg-1);
+  background: var(--bg-3);
+  border: 1px solid var(--border-strong);
+  border-radius: 4px;
+  padding: 1px 8px;
+  margin-right: 8px;
+  cursor: pointer;
+}
+.statusbar__btn:hover { background: var(--bg-4); color: var(--fg-0); }
+.statusbar__btn--plain {
+  background: none;
+  border-color: transparent;
+  padding: 1px 6px;
+}
+.statusbar__btn--plain:hover { background: var(--bg-3); }
+.statusbar__btn--on { background: var(--accent-dim); border-color: var(--accent); color: var(--fg-0); }
+
+/* ---------------------------------------------------------------- */
+/* Markdown プレビューの中身                                          */
+/* ---------------------------------------------------------------- */
+
+.markdown { color: var(--fg-0); font-size: 13.5px; line-height: 1.85; word-wrap: break-word; }
+.markdown > .mdb:first-child > :first-child { margin-top: 0; }
+.mdb { min-height: 0; }
+.markdown h1, .markdown h2, .markdown h3,
+.markdown h4, .markdown h5, .markdown h6 {
+  margin: 1.6em 0 .6em;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.markdown h1 { font-size: 1.7em; border-bottom: 1px solid var(--border); padding-bottom: .3em; }
+.markdown h2 { font-size: 1.4em; border-bottom: 1px solid var(--border); padding-bottom: .25em; }
+.markdown h3 { font-size: 1.2em; }
+.markdown h4 { font-size: 1.05em; }
+.markdown h5, .markdown h6 { font-size: 1em; color: var(--fg-1); }
+.markdown p { margin: .8em 0; }
+.markdown a { color: var(--accent); }
+.markdown ul, .markdown ol { margin: .8em 0; padding-left: 1.7em; }
+.markdown li { margin: .25em 0; }
+.markdown li > input[type="checkbox"] { margin-right: 6px; }
+.markdown blockquote {
+  margin: 1em 0;
+  padding: .2em 1em;
+  color: var(--fg-1);
+  border-left: 3px solid var(--bg-4);
+}
+.markdown code {
+  font-family: var(--font-mono);
+  font-size: .88em;
+  background: var(--bg-2);
+  padding: .15em .4em;
+  border-radius: 4px;
+}
+.markdown pre {
+  margin: 1em 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.markdown pre code { background: none; padding: 0; font-size: 12px; line-height: 1.6; }
+.markdown table { border-collapse: collapse; margin: 1em 0; display: block; overflow-x: auto; }
+.markdown th, .markdown td { padding: 6px 12px; border: 1px solid var(--border-strong); }
+.markdown th { background: var(--bg-2); font-weight: 600; text-align: left; }
+.markdown hr { margin: 1.6em 0; border: none; border-top: 1px solid var(--border); }
+.markdown img { max-width: 100%; border-radius: 4px; }
+/* Mermaid の図。読み込み・描き直しの途中でも画面が点滅しないようにする。 */
+.markdown .mermaid { margin: 1.2em 0; text-align: center; }
+.markdown .mermaid svg { max-width: 100%; height: auto; }
+/* 入力途中で描き直せず、直前の図をそのまま出しているとき。 */
+.markdown .mermaid--stale { opacity: .4; }
+.markdown .mermaid--error {
+  padding: 10px 12px;
+  font-size: 11.5px;
+  text-align: left;
+  color: var(--fg-2);
+  background: var(--bg-2);
+  border: 1px dashed var(--border-strong);
+  border-radius: 6px;
+}
+/* mermaid の読み込みを待っているあいだ。ソースを薄く出しておく。 */
+.markdown pre.mermaidWait { opacity: .5; }
+
+.markdown kbd {
+  font-family: var(--font-mono);
+  font-size: .85em;
+  background: var(--bg-3);
+  border: 1px solid var(--border-strong);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+/* ---------------------------------------------------------------- */
+/* トースト                                                          */
+/* ---------------------------------------------------------------- */
+
+.toasts {
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 380px;
+}
+.toast {
+  padding: 9px 12px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--fg-0);
+  background: var(--bg-2);
+  border: 1px solid var(--border-strong);
+  border-left-width: 3px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-toast);
+  word-break: break-word;
+  animation: toastIn .16s ease-out;
+}
+.toast--error { border-left-color: var(--error); }
+.toast--warn  { border-left-color: var(--warn); }
+.toast--info  { border-left-color: var(--accent); }
+@keyframes toastIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* ---------------------------------------------------------------- */
+/* スクロールバー                                                     */
+/* ---------------------------------------------------------------- */
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--bg-4); border-radius: 5px; border: 2px solid var(--bg-1); }
+::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hover); }
+
+/* 画面が狭いときはサイドバーを縮める */
+@media (max-width: 720px) {
+  :root { --sidebar-w: 200px; }
+  .picker__body { flex-direction: column; }
+  .picker__col--narrow { flex: none; border-left: none; border-top: 1px solid var(--border); }
+  .header__folder { max-width: 140px; }
+  .header__user { display: none; }
+}
+
+/* ---------- 起動直後のスケルトン（ツリーが描かれるまでの数十〜数百 ms） ---------- */
+
+.skeleton { padding: 2px 0; }
+.skeleton__row {
+  height: 22px;
+  margin: 2px 8px 2px calc(8px + var(--d, 0) * 13px);
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--bg-2) 25%, var(--bg-4) 50%, var(--bg-2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.1s linear infinite;
+  opacity: .6;
+}
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* ---------- パフォーマンス計測（コマンドパレット → 表示） ---------- */
+
+.perf {
+  margin: 0;
+  max-height: 60vh;
+  overflow: auto;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre;
+}
+
+/* ----------------------------------------------------------------
+   ターミナル
+
+   ペインの中に出す。出力は 1 コマンド 1 ブロック（.term__block）で、
+   行ごとに要素を作らないぶん、長い出力でも描画が軽い。
+   色はトークン任せなので、ライト／ダークの切り替えに自動で追従する。
+   ---------------------------------------------------------------- */
+
+.termHost {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  background: var(--bg-0);
+}
+
+.term {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--fg-0);
+  background: var(--bg-0);
+}
+
+.term__out {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: auto;
+  padding: 6px 10px 4px;
+}
+
+/* 打った行。背景を薄く敷いて、出力との切れ目を分かるようにする。 */
+.term__echo {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  padding: 3px 6px;
+  margin: 4px -6px 2px;
+  border-radius: 3px;
+  background: var(--term-echo-bg);
+  word-break: break-all;
+}
+.term__cwd { color: var(--term-cwd); flex: none; }
+.term__sign { color: var(--fg-2); flex: none; }
+.term__cmd { color: var(--term-cmd); white-space: pre-wrap; }
+
+/* 出力の塊。1 コマンドの結果をまるごと 1 要素で持つ。 */
+.term__block {
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: 1px 0 3px;
+}
+.term__err { color: var(--error); }
+.term__warn { color: var(--warn); }
+.term__ok { color: var(--ok); }
+.term__ask { color: var(--warn); }
+.term__dim, .term__status { color: var(--fg-2); padding: 1px 0 3px; white-space: pre-wrap; }
+.term__group { color: var(--fg-1); padding-top: 4px; }
+
+/* クリックできる行（ls / find / grep の結果）。 */
+.term__rows { padding: 1px 0 3px; }
+.term__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  color: var(--fg-0);
+  background: none;
+  border: 0;
+  border-radius: 3px;
+  padding: 0 4px;
+  margin: 0 -4px;
+  cursor: pointer;
+}
+.term__row:hover { background: var(--bg-3); }
+.term__row:focus-visible { outline: 1px solid var(--accent); outline-offset: -1px; }
+.term__row--dim { color: var(--fg-2); cursor: default; }
+.term__row--dim:hover { background: none; }
+.term__rowIcon { flex: none; display: flex; }
+.term__rowIcon .icon { width: 14px; height: 14px; }
+.term__rowName { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.term__rowMeta { flex: none; color: var(--fg-2); font-size: 11.5px; min-width: 64px; text-align: right; }
+.term__rowWarn { flex: none; color: var(--warn); font-size: 11.5px; }
+
+.term__row--hit { align-items: baseline; }
+.term__hitPath { flex: none; color: var(--fg-2); }
+.term__hitLine { flex: none; color: var(--term-cwd); margin-right: 4px; }
+.term__hitText {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 入力欄。出力とは分けて下に固定する（長い出力でも打つ場所が動かない）。 */
+.term__foot { flex: none; border-top: 1px solid var(--border); background: var(--bg-0); }
+.term__prompt {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px 6px;
+}
+.term__prompt--busy .term__sign { color: var(--accent); }
+.term__field {
+  flex: 1 1 auto;
+  min-width: 0;
+  font: inherit;
+  color: var(--fg-0);
+  background: transparent;
+  border: 0;
+  outline: none;
+  padding: 1px 0;
+}
+.term__field::placeholder { color: var(--fg-2); }
+
+/* 補完の候補。入力欄のすぐ上に出す。 */
+.term__comp {
+  border-top: 1px solid var(--border);
+  background: var(--bg-1);
+  padding: 4px 6px;
+}
+.term__compList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  max-height: 168px;
+  overflow-y: auto;
+}
+.term__compItem {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font: inherit;
+  color: var(--fg-0);
+  background: none;
+  border: 0;
+  border-radius: 3px;
+  padding: 1px 6px;
+  cursor: pointer;
+  max-width: 100%;
+}
+.term__compItem:hover { background: var(--bg-3); }
+.term__compItem--on { background: var(--accent-dim); color: var(--sel-fg); }
+.term__compItem--dim .term__compLabel { color: var(--fg-2); }
+.term__compLabel { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.term__compHint { color: var(--fg-2); font-size: 11.5px; }
+.term__compItem--on .term__compHint { color: var(--sel-fg-dim); }
+.term__compFoot { color: var(--fg-2); font-size: 11.5px; padding: 3px 6px 1px; }
+.term__compNote { color: var(--fg-2); font-size: 11.5px; padding: 1px 6px; }
+</style>

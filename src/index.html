@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <base target="_top">
+    <meta charset="utf-8">
+    <script>
+      // 計測の起点と getBootstrap の早期発火。
+      // google.script.run が head の時点で使えるなら、モジュール（約 780KB）の
+      // 受信・compile を待たずにサーバー往復を始める。使えなければ null のまま
+      // js 側（takeBootstrapPromise）が呼ぶので、どちらでも動く。
+      try { performance.mark('html-head'); } catch (e) {}
+      window.__bootP = (function () {
+        try {
+          var ok = !!(window.google && google.script && google.script.run);
+          console.log('[probe] head で google.script.run が使える: ' + ok);
+          if (!ok) return null;
+          performance.mark('rpc:getBootstrap:start');
+          var p = new Promise(function (res, rej) {
+            google.script.run.withSuccessHandler(res).withFailureHandler(rej).getBootstrap();
+          });
+          p.catch(function () { /* 消費側（takeBootstrapPromise）が扱う */ });
+          return p;
+        } catch (e) { return null; }
+      })();
+    </script>
+    <script>
+      // 初期テーマ。CSS より前に <html data-theme> を確定させる。
+      // 値の出どころは doGet（UserProperties の settings.themeMode）で、
+      // window.__BOOT は body の末尾にあり、ここでは読めないため別に受け取る。
+      // 'system' のときは OS の設定に従う。matchMedia が使えない環境は
+      // これまでと同じダークにしておく。
+      window.__THEME_MODE = '<?= themeMode ?>';
+      // 配信元のバンドルが取れないとき esm.sh へ逃がすか（ESM_FALLBACK_ENABLED）。
+      window.__ESM_FALLBACK = '<?= esmFallback ?>' === '1';
+      (function () {
+        try {
+          var mode = window.__THEME_MODE;
+          var dark = mode === 'dark' || (mode !== 'light' && !(window.matchMedia
+            && matchMedia('(prefers-color-scheme: light)').matches));
+          document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+        } catch (e) {}
+      })();
+    </script>
+    <!-- Drive REST を直接叩くので、TLS のハンドシェイク（約 100ms）を先に済ませておく。 -->
+    <link rel="preconnect" href="https://www.googleapis.com" crossorigin>
+    <?!= include('importmap'); ?>
+    <?!= include('css'); ?>
+  </head>
+
+  <body>
+    <?!= include('icons'); ?>
+
+    <div id="app" class="app">
+
+      <!-- ============================================================ -->
+      <!-- ヘッダー                                                      -->
+      <!-- ============================================================ -->
+      <header class="header" id="header">
+        <div class="header__left">
+          <button type="button" class="btn btn--icon" id="btnToggleSidebar"
+                  title="サイドバーの表示切り替え" aria-expanded="true"
+          ><svg class="icon"><use href="#i-sidebar"/></svg></button>
+          <span class="header__logo">Drive テキストエディタ</span>
+          <span class="header__folder" id="rootsSummary" title=""></span>
+          <button type="button" class="btn btn--ghost" id="btnChangeFolder">フォルダを管理</button>
+        </div>
+        <div class="header__right">
+          <button type="button" class="btn btn--icon" id="btnTheme"
+                  title="外観（ライト / ダーク / システム）"
+          ><svg class="icon"><use href="#i-theme"/></svg></button>
+          <button type="button" class="btn btn--icon" id="btnCommands"
+                  title="コマンドパレット"
+          ><svg class="icon"><use href="#i-command"/></svg></button>
+          <button type="button" class="btn btn--icon" id="btnKeys"
+                  title="キーボードショートカット"
+          ><svg class="icon"><use href="#i-keyboard"/></svg></button>
+          <span class="status" id="status" data-state="idle">
+            <span class="status__dot" aria-hidden="true"></span>
+            <span class="status__text">—</span>
+          </span>
+          <span class="header__user" id="userEmail"></span>
+        </div>
+      </header>
+
+      <!-- ============================================================ -->
+      <!-- メイン（サイドバー + エディタ）                                -->
+      <!-- ============================================================ -->
+      <div class="main" id="main">
+
+        <nav class="activity" id="activity" aria-label="ビューの切り替え">
+          <button type="button" class="activity__btn activity__btn--on"
+                  data-view="explorer" data-title="エクスプローラ"
+          ><svg class="icon icon--lg"><use href="#i-explorer"/></svg></button>
+          <button type="button" class="activity__btn"
+                  data-view="search" data-title="全体検索"
+          ><svg class="icon icon--lg"><use href="#i-search"/></svg></button>
+          <button type="button" class="activity__btn"
+                  data-view="history" data-title="変更履歴"
+          ><svg class="icon icon--lg"><use href="#i-history"/></svg></button>
+          <span class="activity__spacer"></span>
+          <button type="button" class="activity__btn"
+                  data-view="settings" data-title="設定"
+          ><svg class="icon icon--lg"><use href="#i-settings"/></svg></button>
+        </nav>
+
+        <aside class="sidebar" id="sidebar">
+
+          <!-- エクスプローラ -->
+          <div class="pane" id="paneExplorer">
+            <div class="sidebar__bar">
+              <span class="sidebar__title">エクスプローラ</span>
+              <button type="button" class="btn btn--icon" id="btnNewMemo"
+                      title="新しい一時メモ"
+              ><svg class="icon"><use href="#i-memo"/></svg></button>
+              <button type="button" class="btn btn--icon" id="btnNewFile" title="新規ファイル"
+              ><svg class="icon"><use href="#i-file-new"/></svg></button>
+              <button type="button" class="btn btn--icon" id="btnNewFolder" title="新規フォルダ"
+              ><svg class="icon"><use href="#i-folder-new"/></svg></button>
+              <button type="button" class="btn btn--icon" id="btnCollapseAll" title="すべて折りたたむ"
+              ><svg class="icon"><use href="#i-collapse"/></svg></button>
+              <button type="button" class="btn btn--icon" id="btnRefresh" title="ツリーを再取得"
+              ><svg class="icon"><use href="#i-refresh"/></svg></button>
+            </div>
+            <div class="sidebar__filter">
+              <input type="text" id="filterInput" class="input input--filter"
+                     placeholder="ファイル名で絞り込み" spellcheck="false" autocomplete="off">
+              <button type="button" class="filter__clear" id="btnFilterClear"
+                      title="絞り込みを解除" hidden
+              ><svg class="icon icon--sm"><use href="#i-close"/></svg></button>
+            </div>
+            <div class="sidebar__list" id="entryList" tabindex="0" role="tree">
+              <!-- 起動直後のスケルトン。最初の renderTree() が消す。 -->
+              <div class="skeleton" aria-hidden="true">
+                <div class="skeleton__row" style="--d:0"></div>
+                <div class="skeleton__row" style="--d:1"></div>
+                <div class="skeleton__row" style="--d:1"></div>
+                <div class="skeleton__row" style="--d:2"></div>
+                <div class="skeleton__row" style="--d:1"></div>
+                <div class="skeleton__row" style="--d:0"></div>
+              </div>
+            </div>
+            <div class="sidebar__foot" id="sidebarFoot"></div>
+          </div>
+
+          <!-- 全体検索 -->
+          <div class="pane" id="paneSearch" hidden>
+            <div class="sidebar__bar">
+              <span class="sidebar__title">全体検索</span>
+              <button type="button" class="btn btn--icon" id="btnSearchClear"
+                      title="結果を消す"
+              ><svg class="icon"><use href="#i-clear"/></svg></button>
+            </div>
+            <div class="sidebar__filter">
+              <input type="text" id="searchInput" class="input input--filter"
+                     placeholder="内容を検索して Enter" spellcheck="false" autocomplete="off">
+            </div>
+            <div class="sidebar__list" id="searchResults">
+              <div class="placeholder">
+                ルートフォルダの中を、サブフォルダも含めて検索します。<br>
+                Drive の全文索引で候補を絞ってから、該当ファイルだけを読み込みます。
+              </div>
+            </div>
+            <div class="sidebar__foot" id="searchFoot"></div>
+          </div>
+
+          <!-- 変更履歴 -->
+          <div class="pane" id="paneHistory" hidden>
+            <div class="sidebar__bar">
+              <span class="sidebar__title">変更履歴</span>
+              <button type="button" class="btn btn--icon" id="btnHistoryRefresh"
+                      title="再取得"
+              ><svg class="icon"><use href="#i-refresh"/></svg></button>
+            </div>
+            <div class="sidebar__list" id="historyList">
+              <div class="placeholder">ファイルを開くと、そのファイルの履歴を表示します。</div>
+            </div>
+            <div class="sidebar__foot" id="historyFoot"></div>
+          </div>
+
+          <!-- 設定 -->
+          <div class="pane" id="paneSettings" hidden>
+            <div class="sidebar__bar">
+              <span class="sidebar__title">設定</span>
+              <button type="button" class="btn btn--icon" id="btnSettingsReset"
+                      title="既定に戻す"
+              ><svg class="icon"><use href="#i-reset"/></svg></button>
+            </div>
+            <div class="sidebar__list" id="settingsBody"></div>
+            <div class="sidebar__foot" id="settingsFoot"></div>
+          </div>
+
+        </aside>
+
+        <div class="splitter" id="sidebarSplitter"
+             title="ドラッグで幅を変更 / ダブルクリックで既定に戻す"></div>
+
+        <section class="editorPane">
+          <!--
+            ペインの木。中身は js 側（Panes）が #tplPaneLeaf を複製して組み立てる。
+            leaf（葉）が 1 枚ぶんのエディタ領域で、split（枝）がその入れ子の分割になる。
+            タブバー・パンくず・ビューア・比較ビューは leaf ごとに 1 組ずつ持つが、
+            ステータスバーだけはアプリ全体で 1 本のまま（アクティブなペインを映す）。
+          -->
+          <div class="paneRoot" id="paneRoot"></div>
+
+          <footer class="statusbar" id="statusbar" hidden>
+            <span id="sbName"></span>
+            <span class="statusbar__sep">·</span>
+            <span id="sbSize"></span>
+            <span class="statusbar__spacer"></span>
+            <button type="button" class="statusbar__btn" id="btnPreview" hidden>
+              プレビュー
+            </button>
+            <button type="button" class="statusbar__btn" id="sbCursor"
+                    title="行番号へ移動">1 行 1 列</button>
+            <button type="button" class="statusbar__btn" id="sbIndent"
+                    title="インデントを変更">スペース: 2</button>
+            <button type="button" class="statusbar__btn" id="sbEnc"
+                    title="文字コードを変更">UTF-8</button>
+            <button type="button" class="statusbar__btn" id="sbEol"
+                    title="改行コードを変更">LF</button>
+            <button type="button" class="statusbar__btn" id="sbLang"
+                    title="言語モードを変更">プレーンテキスト</button>
+          </footer>
+        </section>
+
+      <!-- ============================================================ -->
+      <!-- ペイン 1 枚ぶんのひな型                                        -->
+      <!--                                                              -->
+      <!-- Panes.createLeaf() がこれを複製して 1 枚のペインを作る。         -->
+      <!-- 複製するので id は使えない。js 側から引く要素には data-el を     -->
+      <!-- 付けてあり、キーはそのまま el.<キー> の名前と対応している。      -->
+      <!-- ============================================================ -->
+      <template id="tplPaneLeaf">
+        <div class="paneLeaf">
+          <!-- タブをこのペインへドラッグしているときの落とし先（位置はクラスで変える）。 -->
+          <div class="paneLeaf__drop" data-el="drop"></div>
+
+          <div class="tabbar" data-el="tabbar"></div>
+
+          <nav class="crumbs crumbs--editor" data-el="editorCrumbs" hidden
+               aria-label="ファイルの場所"></nav>
+
+          <!-- Markdown の入力バー。中身は js 側で組み立てる（md のタブだけ出す）。 -->
+          <div class="mdbar" data-el="mdBar" role="toolbar"
+               aria-label="Markdown の入力補助" hidden></div>
+
+          <!-- エディタ本体。 -->
+          <div class="panes" data-el="panes">
+            <div class="editorHost" data-el="editorHost"></div>
+          </div>
+
+          <!--
+            プレビュータブ（Markdown / HTML / drawio）の置き場所。
+            中身はタブごとに js 側が作り、表示するタブのものだけを入れる
+            （タブを切り替えても作った DOM は捨てないので、図やスクロール位置が残る）。
+          -->
+          <div class="previewHost" data-el="previewHost" hidden></div>
+
+          <!--
+            ターミナル。中身（出力・入力欄）はタブごとに js 側が作り、
+            表示するタブのものだけをここへ入れる（ペインを移しても
+            出力とスクロール位置がそのまま引っ越す）。
+          -->
+          <div class="termHost" data-el="termHost" hidden></div>
+
+          <!--
+            比較ビュー（WinMerge 相当）。左右の材料は Drive のファイルに限らず、
+            開いているタブの編集中の内容・過去の版・貼り付けた文字列でもよい。
+            バーと各ペインは js 側で組み立てる。タブごとに 1 つの MergeView を
+            持ち、タブを切り替えても状態を捨てない。
+          -->
+          <div class="diffHost" data-el="diffHost" hidden>
+            <div class="diffbar" data-el="diffBar"></div>
+            <div class="diffBody" data-el="diffBody"></div>
+          </div>
+
+          <!--
+            埋め込みビューア（PDF・画像・Office・Google ドキュメント類）。
+            本文は扱わず、Drive / Docs が出しているプレビュー URL を入れるだけ。
+          -->
+          <div class="viewerHost" data-el="viewerHost" hidden>
+            <div class="viewerHost__bar">
+              <span data-el="viewerName"></span>
+              <span class="viewerHost__kind" data-el="viewerKind"></span>
+              <span class="statusbar__spacer"></span>
+              <a data-el="viewerOpenLink" class="btn btn--ghost" target="_blank"
+                 rel="noopener">Drive で開く</a>
+            </div>
+            <iframe data-el="viewerFrame" class="viewerHost__frame"
+                    title="ファイルのプレビュー" referrerpolicy="no-referrer"></iframe>
+            <div class="viewerHost__fallback" data-el="viewerFallback" hidden>
+              プレビューを表示できませんでした。上のリンクから別タブで開いてください。
+            </div>
+          </div>
+
+          <div class="empty" data-el="emptyState">
+            <div class="empty__inner">
+              <div class="empty__icon"><svg class="icon"><use href="#i-file-text"/></svg></div>
+              <p class="empty__title">左の一覧からファイルを選んでください</p>
+              <p class="empty__hint">
+                タブバーの空いているところをダブルクリックすると、一時メモを作れます。<br>
+                Google ドキュメント／スプレッドシート／スライドは閲覧のみできます<br>
+                （編集は Docs 側で行ってください）。
+              </p>
+            </div>
+          </div>
+        </div>
+      </template>
+
+
+
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- 起動オーバーレイ                                              -->
+      <!-- ============================================================ -->
+      <div class="overlay" id="bootOverlay" hidden>
+        <div class="overlay__box">
+          <div class="spinner" aria-hidden="true"></div>
+          <p id="bootMessage">起動しています…</p>
+          <p class="overlay__hint" id="bootHint">
+            初回はスクリプトの承認画面が出ることがあります。
+          </p>
+          <div class="overlay__error" id="bootError" hidden></div>
+          <button type="button" class="btn" id="btnBootRetry" hidden>再試行</button>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- フォルダ選択画面                                              -->
+      <!-- ============================================================ -->
+      <div class="overlay" id="pickerOverlay" hidden>
+        <div class="picker">
+          <div class="picker__head">
+            <h1 class="picker__title" id="pickerTitle">編集するフォルダ</h1>
+            <button type="button" class="btn btn--ghost" id="btnPickerClose" hidden>閉じる</button>
+          </div>
+
+          <p class="picker__note" id="pickerNote" hidden></p>
+
+          <div class="picker__current" id="pickerCurrent">
+            <h2 class="picker__label" id="pickerCurrentLabel">いま開いているフォルダ</h2>
+            <div class="rootList" id="rootList"></div>
+          </div>
+
+          <div class="picker__body">
+            <div class="picker__col">
+              <h2 class="picker__label" id="pickerAddLabel">ドライブから選んで追加</h2>
+              <div class="tree" id="tree"></div>
+            </div>
+
+            <div class="picker__col picker__col--narrow">
+              <h2 class="picker__label" id="pickerRefLabel">URL または ID で追加</h2>
+              <p class="picker__desc">
+                左のツリーに出てこないフォルダ（他の人から個別に共有されたものなど）は
+                こちらから指定できます。
+              </p>
+              <div class="picker__inputRow">
+                <input type="text" id="folderRefInput" class="input"
+                       placeholder="https://drive.google.com/drive/folders/…"
+                       spellcheck="false" autocomplete="off">
+                <button type="button" class="btn" id="btnResolveRef">確認</button>
+              </div>
+              <div class="picker__resolved" id="resolvedBox" hidden></div>
+            </div>
+          </div>
+
+          <!-- 一時メモの置き場所。初回はこの画面しか出ないので、ここでも変えられる -->
+          <div class="picker__tmp" id="pickerTmp" hidden>
+            <h2 class="picker__label">一時メモの置き場所</h2>
+            <div class="picker__tmpRow">
+              <span class="picker__tmpPath" id="pickerTmpPath"></span>
+              <button type="button" class="btn" id="btnTmpFolder">変更…</button>
+              <button type="button" class="btn btn--ghost" id="btnTmpFolderReset" hidden>
+                既定に戻す
+              </button>
+            </div>
+            <p class="picker__desc">
+              タブバーの ＋ で作る「とっさのメモ」を置くフォルダです。
+              選んだフォルダの下にアプリ専用のフォルダを作ります。あとから設定でも変えられます。
+            </p>
+          </div>
+
+          <div class="picker__foot">
+            <label class="picker__name" id="pickerNameWrap" hidden>
+              <span class="picker__nameLabel">ファイル名</span>
+              <input type="text" id="pickerName" class="input"
+                     spellcheck="false" autocomplete="off">
+            </label>
+            <span class="picker__selected" id="pickerSelected">フォルダが選択されていません</span>
+            <button type="button" class="btn btn--primary" id="btnConfirmFolder" disabled>
+              このフォルダを追加
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================ -->
+      <!-- 汎用モーダル（競合確認・下書き復元など）                        -->
+      <!-- ============================================================ -->
+      <div class="overlay overlay--modal" id="modalOverlay" hidden>
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+          <h2 class="modal__title" id="modalTitle"></h2>
+          <div class="modal__body" id="modalBody"></div>
+          <div class="modal__actions" id="modalActions"></div>
+        </div>
+      </div>
+
+      <!-- コマンドパレット / クイックオープン -->
+      <div class="palette" id="paletteOverlay" hidden>
+        <div class="palette__box" role="dialog" aria-modal="true">
+          <input type="text" id="paletteInput" class="palette__input"
+                 spellcheck="false" autocomplete="off" autocapitalize="off">
+          <div class="palette__list" id="paletteList" role="listbox"></div>
+          <div class="palette__foot" id="paletteFoot"></div>
+        </div>
+      </div>
+
+      <!-- 右クリックメニュー -->
+      <div class="ctxmenu" id="ctxMenu" role="menu" hidden></div>
+
+      <!-- トースト -->
+      <div class="toasts" id="toasts" aria-live="polite"></div>
+
+    </div>
+
+    <!--
+      前回の状態（ルート・展開中フォルダの一覧・アクティブなタブの本文・設定）。
+      doGet が UserProperties と CacheService から組み立てて埋める（Drive は見ない）。
+      js 側はこれを同期で描いてから getBootstrap の応答と突き合わせる。
+      module script は deferred なので、ここ（body 末尾）に置いても js より先に評価される。
+      無ければ null。
+    -->
+    <script>window.__BOOT = <?!= bootJson ?>;</script>
+    <?!= include('js'); ?>
+  </body>
+</html>
