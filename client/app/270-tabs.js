@@ -149,6 +149,8 @@ async function openFile(fileId, name, kind, opts = {}) {
  */
 async function openBeside(entry) {
   if (!entry || !entry.openable) return;
+  // スマホでは横に並べられないので、普通に開く。
+  if (Mobile.on) { await openEntry(entry, { ephemeral: false }); return; }
   const already = Panes.leafOf(entry.id);
   if (already) {
     Panes.focus(already.id);
@@ -410,6 +412,8 @@ async function activateTab(tabId) {
   let tab = getTab(tabId);
   if (!tab) return;
   tabId = tab.id;
+  // スマホでドロワーから開いたなら、ドロワーを閉じて本文を見せる。
+  Mobile.onTabShown();
 
   // どのペインにも載っていないタブ（作られた直後）は、いまのペインへ入れる。
   let leaf = Panes.leafOf(tabId) || Panes.active() || Panes.init();

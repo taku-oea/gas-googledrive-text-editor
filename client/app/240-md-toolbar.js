@@ -217,8 +217,13 @@ const Layout = {
   width: 268,
   sidebarHidden: false,
 
-  /** 画面幅に対して広すぎない値に丸める。 */
+  /**
+   * 画面幅に対して広すぎない値に丸める。
+   * スマホではサイドバーはドロワーで幅も CSS が決めるので、丸めずにそのまま持つ
+   * （セッションは PC と共有なので、スマホの幅で丸めた値を PC へ持ち帰らない）。
+   */
   clamp(px) {
+    if (Mobile.on) return Number.isFinite(px) ? Math.round(px) : Layout.width;
     const max = Math.max(Layout.MIN_WIDTH, Math.round(window.innerWidth * 0.6));
     return Math.min(max, Math.max(Layout.MIN_WIDTH, Math.round(px)));
   },
@@ -226,9 +231,10 @@ const Layout = {
   apply() {
     el.app.style.setProperty('--sidebar-w', Layout.width + 'px');
     el.app.classList.toggle('app--sidebarHidden', Layout.sidebarHidden);
-    el.btnToggleSidebar.setAttribute('aria-expanded', String(!Layout.sidebarHidden));
-    el.btnToggleSidebar.title = (Layout.sidebarHidden ? 'サイドバーを表示' : 'サイドバーを隠す') +
-      '（' + MOD + ' + B）';
+    el.btnToggleSidebar.setAttribute('aria-expanded',
+      String(Mobile.on ? Mobile.drawerOpen : !Layout.sidebarHidden));
+    el.btnToggleSidebar.title = Mobile.on ? 'ファイル一覧'
+      : (Layout.sidebarHidden ? 'サイドバーを表示' : 'サイドバーを隠す') + '（' + MOD + ' + B）';
     // 幅が変わっても window の resize は起きないので、
     // 各ペインの CodeMirror に測り直しを促しておく。
     for (const leaf of Panes.leaves()) {
@@ -245,6 +251,8 @@ const Layout = {
   },
 
   toggleSidebar() {
+    // スマホではドロワーの開閉にする（PC のサイドバーの開閉状態は触らない）。
+    if (Mobile.on) { Mobile.toggleDrawer(); return; }
     Layout.sidebarHidden = !Layout.sidebarHidden;
     Layout.apply();
     Session.save();

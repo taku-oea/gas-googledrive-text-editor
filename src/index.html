@@ -59,7 +59,8 @@
         <div class="header__left">
           <button type="button" class="btn btn--icon" id="btnToggleSidebar"
                   title="サイドバーの表示切り替え" aria-expanded="true"
-          ><svg class="icon"><use href="#i-sidebar"/></svg></button>
+          ><svg class="icon desktopOnly"><use href="#i-sidebar"/></svg
+          ><svg class="icon mobileOnly"><use href="#i-menu"/></svg></button>
           <span class="header__logo">Drive テキストエディタ</span>
           <span class="header__folder" id="rootsSummary" title=""></span>
           <button type="button" class="btn btn--ghost" id="btnChangeFolder">フォルダを管理</button>
@@ -68,9 +69,24 @@
           <button type="button" class="btn btn--icon" id="btnTheme"
                   title="外観（ライト / ダーク / システム）"
           ><svg class="icon"><use href="#i-theme"/></svg></button>
+          <!--
+            スマホだけで出すボタン。キーボードショートカットの代わりの入口で、
+            狭い画面ではロゴ・フォルダ名・外観・ショートカット一覧を隠してこちらを出す。
+          -->
+          <span class="header__mobile mobileOnly">
+            <button type="button" class="btn btn--icon" id="btnUndo" title="元に戻す"
+            ><svg class="icon"><use href="#i-undo"/></svg></button>
+            <button type="button" class="btn btn--icon" id="btnRedo" title="やり直し"
+            ><svg class="icon"><use href="#i-redo"/></svg></button>
+            <button type="button" class="btn btn--icon" id="btnSave" title="保存"
+            ><svg class="icon"><use href="#i-save"/></svg></button>
+            <button type="button" class="btn btn--icon" id="btnHeaderMemo" title="新しい一時メモ"
+            ><svg class="icon"><use href="#i-memo"/></svg></button>
+          </span>
           <button type="button" class="btn btn--icon" id="btnCommands"
                   title="コマンドパレット"
-          ><svg class="icon"><use href="#i-command"/></svg></button>
+          ><svg class="icon desktopOnly"><use href="#i-command"/></svg
+          ><svg class="icon mobileOnly"><use href="#i-more"/></svg></button>
           <button type="button" class="btn btn--icon" id="btnKeys"
                   title="キーボードショートカット"
           ><svg class="icon"><use href="#i-keyboard"/></svg></button>
@@ -86,6 +102,9 @@
       <!-- メイン（サイドバー + エディタ）                                -->
       <!-- ============================================================ -->
       <div class="main" id="main">
+
+        <!-- スマホでサイドバーを開いているときの背景。押すと閉じる。 -->
+        <div class="drawerScrim" id="drawerScrim" hidden></div>
 
         <nav class="activity" id="activity" aria-label="ビューの切り替え">
           <button type="button" class="activity__btn activity__btn--on"
@@ -297,8 +316,12 @@
           <div class="empty" data-el="emptyState">
             <div class="empty__inner">
               <div class="empty__icon"><svg class="icon"><use href="#i-file-text"/></svg></div>
-              <p class="empty__title">左の一覧からファイルを選んでください</p>
-              <p class="empty__hint">
+              <p class="empty__title desktopOnly">左の一覧からファイルを選んでください</p>
+              <p class="empty__title mobileOnly">左上の ☰ からファイルを選んでください</p>
+              <p class="empty__hint mobileOnly">
+                右上のメモのボタンで、すぐに一時メモを書き始められます。
+              </p>
+              <p class="empty__hint desktopOnly">
                 タブバーの空いているところをダブルクリックすると、一時メモを作れます。<br>
                 Google ドキュメント／スプレッドシート／スライドは閲覧のみできます<br>
                 （編集は Docs 側で行ってください）。
@@ -353,7 +376,7 @@
             <div class="picker__col picker__col--narrow">
               <h2 class="picker__label" id="pickerRefLabel">URL または ID で追加</h2>
               <p class="picker__desc">
-                左のツリーに出てこないフォルダ（他の人から個別に共有されたものなど）は
+                ツリーに出てこないフォルダ（他の人から個別に共有されたものなど）は
                 こちらから指定できます。
               </p>
               <div class="picker__inputRow">

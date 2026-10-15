@@ -282,7 +282,7 @@ function appendPinRows(frag) {
     // どうすれば何かが並ぶのかが分からない。
     frag.appendChild(h('div', {
       class: 'placeholder placeholder--lines placeholder--inline',
-      text: 'よく使うファイルをここに。\nタブやファイルを右クリック →「ピン留めする」'
+      text: 'よく使うファイルをここに。\nタブやファイルを' + (Mobile.on ? '長押し' : '右クリック') + ' →「ピン留めする」'
     }));
     return;
   }
@@ -501,7 +501,7 @@ function wirePinDrag(row, item) {
 function showPinSection() {
   // Views.show は同じビューをもう一度指すとサイドバーを畳む。
   // ここでは必ず見せたいので、畳まれる条件のときだけ呼ぶ。
-  if (Views.current !== 'explorer' || Layout.sidebarHidden) Views.show('explorer');
+  if (Views.current !== 'explorer' || !Mobile.sidebarShown()) Views.show('explorer');
   if (Pins.collapsed) { Pins.collapsed = false; Pins.save(); }
   renderTree();
   el.entryList.scrollTop = 0;

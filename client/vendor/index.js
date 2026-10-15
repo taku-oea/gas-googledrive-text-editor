@@ -20,7 +20,7 @@
 export { basicSetup } from 'codemirror';
 export { EditorState, EditorSelection, Compartment, Annotation, Transaction, Prec } from '@codemirror/state';
 export { EditorView, keymap } from '@codemirror/view';
-export { indentWithTab } from '@codemirror/commands';
+export { indentWithTab, undo, redo } from '@codemirror/commands';
 export { search, gotoLine, openSearchPanel } from '@codemirror/search';
 export { indentUnit, syntaxHighlighting, HighlightStyle, StreamLanguage } from '@codemirror/language';
 export { tags } from '@lezer/highlight';

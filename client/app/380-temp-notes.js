@@ -666,7 +666,7 @@ const TempMemo = {
 async function showTempSection() {
   // Views.show は同じビューをもう一度指すとサイドバーを畳む。
   // ここでは必ず見せたいので、畳まれる条件のときだけ呼ぶ。
-  if (Views.current !== 'explorer' || Layout.sidebarHidden) Views.show('explorer');
+  if (Views.current !== 'explorer' || !Mobile.sidebarShown()) Views.show('explorer');
 
   const node = Tree.tmpRootId ? Tree.get(Tree.tmpRootId) : null;
   if (node && node.loaded) {

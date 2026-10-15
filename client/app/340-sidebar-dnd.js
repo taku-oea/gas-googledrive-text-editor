@@ -155,6 +155,49 @@ async function moveEntries(nodes, destFolderId) {
 }
 
 /**
+ * 「移動…」（右クリック・長押しのメニュー）。ドラッグできないスマホでの移動の入口で、
+ * 行き先はフォルダ選択画面で選ぶ。ツリーに読み込んであるフォルダなら、ドラッグと
+ * 同じ経路（画面を先に動かし、失敗したら戻す）を通す。
+ * @param {TreeNode[]} nodes
+ */
+async function moveViaPicker(nodes) {
+  nodes = nodes.filter((n) => n && !Tree.isRoot(n.id));
+  if (!nodes.length) return;
+  const first = nodes[0];
+  const parent = first.parentId ? Tree.get(first.parentId) : null;
+  const choice = await Picker.choose({
+    title: nodes.length > 1 ? nodes.length + ' 件の移動先' : '「' + first.name + '」の移動先',
+    nameless: true,
+    confirmLabel: 'ここへ移動',
+    folder: parent ? { id: parent.id, name: parent.name } : null
+  });
+  if (!choice) return;
+  const destId = choice.folderId;
+  if (Tree.get(destId)) { await moveEntries(nodes, destId); return; }
+
+  // ツリーに出ていないフォルダ（開いていないドライブの中など）へは、Drive 上で移してから
+  // ツリーから外す。移動先の中身はツリーに無いので、画面を先に動かすことはできない。
+  const movable = nodes.filter((n) => n.id !== destId);
+  const results = await Promise.allSettled(movable.map((n) =>
+    (n.type === 'folder' ? Api.moveFolder(n.id, destId) : Api.moveFile(n.id, destId))));
+  const failed = [];
+  results.forEach((r, i) => {
+    const n = movable[i];
+    if (r.status === 'fulfilled') {
+      if (n.type !== 'folder') syncTempFlag(n.id, destId);
+      Tree.remove(n.id);
+      return;
+    }
+    failed.push(n.name + '（' + (r.reason && r.reason.message ? r.reason.message : r.reason) + '）');
+  });
+  App.selection.clear();
+  renderTree();
+  Session.save();
+  if (failed.length) toast('移動できなかったもの: ' + failed.join('、'), 'error', 12000);
+  else toast('「' + choice.folderName + '」へ ' + movable.length + ' 件を移動しました', 'info', 4000);
+}
+
+/**
  * 移動したファイルの「一時メモかどうか」をタブ側にも反映する。
  *
  * ツリーから一時メモを引きずり出すのは、保存先を決めるもう 1 つの経路。

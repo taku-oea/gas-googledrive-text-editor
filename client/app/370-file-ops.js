@@ -8,7 +8,7 @@
  */
 function doCopyToClipboard(node) {
   App.clipboard = { id: node.id, name: node.name, kind: 'file' };
-  toast('「' + node.name + '」をコピーしました。フォルダを右クリックして貼り付けてください。', 'info', 4500);
+  toast('「' + node.name + '」をコピーしました。フォルダを' + (Mobile.on ? '長押し' : '右クリック') + 'して貼り付けてください。', 'info', 4500);
 }
 
 /**

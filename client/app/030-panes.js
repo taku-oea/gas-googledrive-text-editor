@@ -150,6 +150,9 @@ const Panes = {
    * @return {Object|null} 作った leaf
    */
   split(leafId, dir, after) {
+    // スマホでは分割しない（1 枚しか出さないので、作っても見えない）。呼び出し側は null を
+    // 「分割できなかった」として同じペインに置く。
+    if (Mobile.on) return null;
     const leaf = Panes.byId.get(leafId);
     if (!leaf || leaf.type !== 'leaf') return null;
     if (Panes.leaves().length >= Panes.MAX) {
@@ -179,7 +182,7 @@ const Panes = {
    * @return {Object|null} 作った leaf
    */
   splitRoot(dir, after) {
-    if (!Panes.root) return null;
+    if (!Panes.root || Mobile.on) return null;
     if (Panes.leaves().length >= Panes.MAX) {
       toast('ペインは ' + Panes.MAX + ' 枚までです', 'info', 3000);
       return null;

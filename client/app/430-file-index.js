@@ -154,7 +154,9 @@ const Palette = {
     el.paletteInput.value = '';
     el.paletteOverlay.hidden = false;
     Palette.render();
-    el.paletteInput.focus();
+    // スマホのコマンド一覧は押して選ぶものなので、入力欄にフォーカスしない
+    // （するとソフトキーボードが出て一覧の半分が隠れる）。ファイルを開くときは名前を打つので置く。
+    if (!(Mobile.on && mode === 'command')) el.paletteInput.focus();
     void Palette.loadFuzzy().then(() => { if (Palette.mode) Palette.render(); });
   },
 

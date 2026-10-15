@@ -28,11 +28,12 @@ const Views = {
    */
   show(name) {
     // 同じアイコンをもう一度押したらサイドバーを畳む（VS Code と同じ）。
-    if (Views.current === name && !Layout.sidebarHidden) {
+    // スマホではサイドバーはドロワーなので、開閉は Mobile が持つ。
+    if (Views.current === name && Mobile.sidebarShown()) {
       Layout.toggleSidebar();
       return;
     }
-    if (Layout.sidebarHidden) Layout.toggleSidebar();
+    if (!Mobile.sidebarShown()) Layout.toggleSidebar();
 
     Views.current = name;
     for (const [key, id] of Object.entries(Views.panes)) {
@@ -45,7 +46,8 @@ const Views = {
     if (name === 'search') el.searchInput.focus();
     else if (name === 'history') void History.load();
     else if (name === 'settings') Settings.render();
-    else el.entryList.focus();
+    // スマホでは一覧にフォーカスを置かない（置いても使い道がなく、キーボードの枠が出るだけ）。
+    else if (!Mobile.on) el.entryList.focus();
 
     Session.save();
   }

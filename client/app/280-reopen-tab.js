@@ -202,6 +202,18 @@ function renderTabs() {
 function renderPaneTabs(leaf) {
   const bar = leaf.el.tabbar;
   bar.textContent = '';
+  // スマホでは操作対象のペインしか出さない。PC で分割していたセッションなら、
+  // ほかのペインのタブへ行けるよう、何枚目かを出して押すと次のペインへ移る。
+  if (Mobile.on && Panes.isSplit()) {
+    const leaves = Panes.leaves();
+    bar.appendChild(h('button', {
+      type: 'button',
+      class: 'tabbar__pane',
+      title: '次のペインへ（PC で分割していたペイン）',
+      text: (leaves.indexOf(leaf) + 1) + '/' + leaves.length,
+      onclick: () => { focusNextPane(1); renderTabs(); }
+    }));
+  }
   for (const tabId of leaf.tabIds) {
     const tab = getTab(tabId);
     if (!tab) continue;
@@ -352,9 +364,9 @@ function showTabMenu(x, y, tab) {
       { label: '新しいターミナル', icon: 'terminal',
         onClick: () => void Term.open({ cwd: tab.term ? tab.term.cwd : null }) },
       { sep: true },
-      { label: '右のペインへ移す', icon: 'columns', disabled: !canSplit,
+      { label: '右のペインへ移す', icon: 'columns', disabled: !canSplit, desktopOnly: true,
         onClick: () => splitTabOut(tab.id, 'row') },
-      { label: '下のペインへ移す', icon: 'rows', disabled: !canSplit,
+      { label: '下のペインへ移す', icon: 'rows', disabled: !canSplit, desktopOnly: true,
         onClick: () => splitTabOut(tab.id, 'col') }
     ]);
     return;
@@ -376,9 +388,9 @@ function showTabMenu(x, y, tab) {
       { label: '描き直す', icon: 'refresh',
         onClick: () => Preview.render(tab) },
       { sep: true },
-      { label: '右のペインへ移す', icon: 'columns', disabled: !canSplit,
+      { label: '右のペインへ移す', icon: 'columns', disabled: !canSplit, desktopOnly: true,
         onClick: () => splitTabOut(tab.id, 'row') },
-      { label: '下のペインへ移す', icon: 'rows', disabled: !canSplit,
+      { label: '下のペインへ移す', icon: 'rows', disabled: !canSplit, desktopOnly: true,
         onClick: () => splitTabOut(tab.id, 'col') }
     ]);
     return;
@@ -402,9 +414,9 @@ function showTabMenu(x, y, tab) {
       // 比較タブは Drive 上のファイルに対応していないので、
       // サイドバーの「ピン留め」には並べられない（このタブの中だけの旗になる）。
       { sep: true },
-      { label: '右のペインへ移す', icon: 'columns', disabled: !canSplit,
+      { label: '右のペインへ移す', icon: 'columns', disabled: !canSplit, desktopOnly: true,
         onClick: () => splitTabOut(tab.id, 'row') },
-      { label: '下のペインへ移す', icon: 'rows', disabled: !canSplit,
+      { label: '下のペインへ移す', icon: 'rows', disabled: !canSplit, desktopOnly: true,
         onClick: () => splitTabOut(tab.id, 'col') },
       { sep: true },
       // 比較タブは Drive 上のファイルに対応していないので、
@@ -439,13 +451,13 @@ function showTabMenu(x, y, tab) {
     {
       label: '右のペインへ移す',
       icon: 'columns',
-      disabled: !canSplit,
+      disabled: !canSplit, desktopOnly: true,
       onClick: () => splitTabOut(tab.id, 'row')
     },
     {
       label: '下のペインへ移す',
       icon: 'rows',
-      disabled: !canSplit,
+      disabled: !canSplit, desktopOnly: true,
       onClick: () => splitTabOut(tab.id, 'col')
     },
     { sep: true },

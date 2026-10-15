@@ -48,13 +48,18 @@ var PROP_FAVICON_URL = 'FAVICON_URL';
  *   google-site-verification
  * index.html に直接書いた meta タグも同様に無視される（公式ドキュメント明記）。
  *
+ * viewport の maximum-scale=1 は、iOS が 16px 未満の入力欄にフォーカスしたとき
+ * 画面を勝手に拡大するのを止めるため（iOS は指での拡大は引き続きできる）。
+ * interactive-widget=resizes-content は、Android の Chrome でソフトキーボードを
+ * 出したときに画面の高さを縮めさせるため（既定では縮まず、下の行がキーボードに隠れる）。
+ *
  * mobile-web-app-capable 系は、ホーム画面に追加したアイコンから開いたときに
  * ブラウザの UI を出さずアプリとして表示させるためのもの。
  * theme-color や <link rel="manifest"> は入れる API が無いため、
  * 本物の PWA（Service Worker・オフライン）にはできない。docs/icons.md の「アプリとしてインストールしたときのアイコン（PWA）」を参照。
  */
 var META_TAGS = [
-  ['viewport', 'width=device-width, initial-scale=1'],
+  ['viewport', 'width=device-width, initial-scale=1, maximum-scale=1, interactive-widget=resizes-content'],
   ['mobile-web-app-capable', 'yes'],
   ['apple-mobile-web-app-capable', 'yes']
 ];

@@ -37,7 +37,7 @@ const Term = {
       return other && other.kind === 'term' && other.id !== tab.id;
     });
     const leaves = Panes.leaves();
-    const target = (hasTerm(from) ? from : leaves.find(hasTerm)) ||
+    const target = Mobile.on ? from : (hasTerm(from) ? from : leaves.find(hasTerm)) ||
       (leaves.length < Panes.MAX ? Panes.splitRoot('col', true) : from);
 
     Panes.addTab(target || from, tab.id);

@@ -47,6 +47,17 @@ wireSplitter(el.sidebarSplitter, {
 
 el.btnToggleSidebar.addEventListener('click', () => { Layout.toggleSidebar(); });
 
+// ---- スマホのヘッダー（キーボードショートカットの代わり） ----
+// 押してもエディタからフォーカスを奪わない（奪うとソフトキーボードが閉じる）。
+for (const btn of [el.btnUndo, el.btnRedo, el.btnSave, el.btnHeaderMemo]) {
+  btn.addEventListener('mousedown', (ev) => { ev.preventDefault(); });
+}
+el.btnUndo.addEventListener('click', () => { Mobile.history(-1); });
+el.btnRedo.addEventListener('click', () => { Mobile.history(1); });
+// 一時メモでは「保存先を決める」になる（Cmd/Ctrl+S と同じ）。
+el.btnSave.addEventListener('click', () => { void saveNow(App.activeId); });
+el.btnHeaderMemo.addEventListener('click', () => { void TempMemo.create(); });
+
 // ---- アクティビティバー ----
 // ツールチップのショートカット表記は OS で変わるので、ここで組み立てる。
 const VIEW_KEYS = { explorer: MOD + '+Shift+E', search: MOD + '+Shift+F' };
@@ -215,6 +226,13 @@ el.paletteInput.addEventListener('keydown', (ev) => {
   else if (ev.key === 'Escape') { ev.preventDefault(); Palette.close(); }
   else if (ev.key === 'Tab') { ev.preventDefault(); Palette.move(ev.shiftKey ? -1 : 1); }
 });
+// スマホのコマンド一覧は入力欄にフォーカスしないので、Escape は文書全体で拾う
+// （狭いウィンドウの PC でキーボードから閉じるとき用）。
+document.addEventListener('keydown', (ev) => {
+  if (ev.key !== 'Escape' || el.paletteOverlay.hidden || ev.target === el.paletteInput) return;
+  ev.preventDefault();
+  Palette.close();
+}, true);
 el.paletteOverlay.addEventListener('mousedown', (ev) => {
   // 枠の外を押したら閉じる。
   if (!ev.target.closest('.palette__box')) Palette.close();
@@ -301,7 +319,7 @@ document.addEventListener('keydown', (ev) => {
   if (ev.shiftKey && key === 'e') {
     // Cmd+Shift+E でエクスプローラの絞り込みへ。
     ev.preventDefault();
-    if (Views.current !== 'explorer' || Layout.sidebarHidden) Views.show('explorer');
+    if (Views.current !== 'explorer' || !Mobile.sidebarShown()) Views.show('explorer');
     el.filterInput.focus();
     el.filterInput.select();
     return;
@@ -309,7 +327,7 @@ document.addEventListener('keydown', (ev) => {
   if (ev.shiftKey && key === 'f') {
     // Cmd+Shift+F で全体検索。CM の検索パネル（Cmd+F）とは別物。
     ev.preventDefault();
-    if (Views.current !== 'search' || Layout.sidebarHidden) Views.show('search');
+    if (Views.current !== 'search' || !Mobile.sidebarShown()) Views.show('search');
     el.searchInput.focus();
     el.searchInput.select();
     return;
@@ -350,6 +368,9 @@ window.addEventListener('unhandledrejection', (ev) => {
   const msg = ev.reason && ev.reason.message ? ev.reason.message : String(ev.reason);
   toast('処理中にエラーが発生しました: ' + msg, 'error', 10000);
 });
+
+// スマホ表示かどうかを、セッションを復元する前に決めておく（サイドバーの扱いが変わる）。
+Mobile.init();
 
 // ペインを 1 枚だけ作っておく。この時点では中身は空で、
 // セッションに分割の記録があれば applyBootstrap の中で組み直す。

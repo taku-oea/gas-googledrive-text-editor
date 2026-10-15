@@ -2250,4 +2250,211 @@ body {
 .term__compItem--on .term__compHint { color: var(--sel-fg-dim); }
 .term__compFoot { color: var(--fg-2); font-size: 11.5px; padding: 3px 6px 1px; }
 .term__compNote { color: var(--fg-2); font-size: 11.5px; padding: 1px 6px; }
+/* ================================================================= */
+/* スマホ（狭い画面）                                                  */
+/*                                                                   */
+/* .app--mobile は Mobile（client/app/245-mobile.js）が付ける。幅 768px  */
+/* 以下と横向きのスマホが対象。.app--touch は指で操作する端末（タブレットを */
+/* 含む）で、押す的を大きくするだけに使う。                              */
+/* ================================================================= */
+
+.app:not(.app--mobile) .mobileOnly { display: none !important; }
+.app--mobile .desktopOnly { display: none !important; }
+
+/* 指で押す的は 40px 前後にする。長押しで文字選択やリンクのメニューが出ないようにする。 */
+.app--touch .row,
+.app--touch .tab,
+.app--touch .pitem,
+.app--touch .ctxmenu__item {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.app--touch .row__main { padding-top: 8px; padding-bottom: 8px; font-size: 14px; }
+.app--touch .row__twisty { width: 24px; height: 36px; font-size: 15px; }
+.app--touch .row__act { padding: 8px; font-size: 15px; }
+.app--touch .row__meta { font-size: 11px; }
+
+.app--mobile {
+  --header-h: 48px;
+  --statusbar-h: 32px;
+}
+
+/* ---- ヘッダー ---- */
+.app--mobile .header { gap: 2px; padding: 0 2px; }
+.app--mobile .header__left { flex: none; gap: 0; }
+.app--mobile .header__right { flex: 1 1 auto; gap: 0; justify-content: flex-end; }
+.app--mobile .header__logo,
+.app--mobile .header__folder,
+.app--mobile .header__user,
+.app--mobile #btnChangeFolder,
+.app--mobile #btnTheme,
+.app--mobile #btnKeys { display: none; }
+.app--mobile .header__mobile { display: inline-flex; align-items: center; }
+/* 保存の状態はハンバーガーのすぐ右に置き、余った幅を使う。 */
+.app--mobile .status { order: -1; flex: 1 1 auto; min-width: 0; margin-left: 4px; font-size: 13px; }
+.app--mobile .status__text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app--mobile .btn--icon {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  font-size: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+/* ---- サイドバーはドロワー ---- */
+.app--mobile .main { position: relative; }
+.app--mobile .splitter { display: none !important; }
+.app--mobile .activity,
+.app--mobile .sidebar { display: none; }
+.app--mobile.app--drawerOpen .activity,
+.app--mobile.app--drawerOpen .sidebar {
+  display: flex;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 40;
+}
+.app--mobile.app--drawerOpen .activity { left: 0; }
+.app--mobile.app--drawerOpen .sidebar {
+  left: 48px;
+  /* 右に指 1 本ぶん残し、そこ（背景）を押しても閉じられるようにする。 */
+  width: min(calc(100% - 96px), 420px);
+  border-right: 1px solid var(--border);
+  box-shadow: var(--shadow-menu);
+}
+.drawerScrim { display: none; }
+.app--mobile .drawerScrim:not([hidden]) {
+  display: block;
+  position: absolute;
+  inset: 0;
+  z-index: 39;
+  background: var(--scrim);
+}
+.app--mobile .sidebar__bar { min-height: 46px; }
+.app--mobile .sidebar__title { font-size: 12px; }
+.app--mobile .sidebar__foot { font-size: 11px; }
+
+/* ---- ペインは操作対象の 1 枚だけ出す（分割の記録は崩さない） ---- */
+.app--mobile .paneSash { display: none; }
+.app--mobile .paneLeaf:not(.paneLeaf--active) { display: none; }
+.app--mobile .paneNode:not(:has(.paneLeaf--active)) { display: none; }
+
+/* ---- タブ ---- */
+.app--mobile .tabbar { min-height: 42px; scrollbar-width: none; }
+.app--mobile .tabbar::-webkit-scrollbar { display: none; }
+.app--mobile .tab { max-width: 62vw; padding: 0 2px 0 12px; font-size: 14px; }
+.app--mobile .tab__close {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+}
+/* 閉じるボタンは表示中のタブにだけ出す（ほかのタブは長押しのメニューから閉じられる）。 */
+.app--mobile .tab:not(.tab--active) .tab__close { display: none; }
+.app--mobile .tab:not(.tab--active) { padding-right: 12px; }
+/* 新しい一時メモはヘッダーにあるので、タブバーの ＋ は出さない。 */
+.app--mobile .tabbar__new { display: none; }
+.tabbar__pane {
+  flex: none;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  background: var(--bg-2);
+  border: none;
+  border-right: 1px solid var(--border);
+  cursor: pointer;
+}
+.app--mobile .crumbs--editor { display: none !important; }
+
+/* ---- Markdown の入力バー ---- */
+.app--mobile .mdbar { padding: 3px 4px; scrollbar-width: none; }
+.app--mobile .mdbar::-webkit-scrollbar { display: none; }
+.app--mobile .mdbar__btn { min-width: 40px; min-height: 36px; padding: 2px 10px; font-size: 14px; }
+
+/* ---- エディタ ---- */
+/* 設定の文字サイズが小さくても、スマホでは 15px を下回らないようにする。 */
+.app--mobile .editorHost .cm-scroller { font-size: max(var(--editor-font-size, 12.5px), 15px); }
+.app--mobile .editorHost .cm-gutters { font-size: 12px; }
+/* iOS はキーボードを出しても画面が縮まないので、最後の行もキーボードより上へ
+   持ち上げられるよう、本文の下に余白を足す。 */
+.app--mobile.app--ios .editorHost .cm-content { padding-bottom: 45vh; }
+
+/* ---- ステータスバー ---- */
+.app--mobile .statusbar {
+  gap: 4px;
+  padding: 0 4px;
+  font-size: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  white-space: nowrap;
+}
+.app--mobile .statusbar::-webkit-scrollbar { display: none; }
+.app--mobile #sbName { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.app--mobile #sbSize,
+.app--mobile #sbCursor,
+.app--mobile .statusbar__sep { display: none; }
+.app--mobile .statusbar__btn { flex: none; margin-right: 2px; padding: 3px 8px; font-size: 12px; }
+
+/* ---- 入力欄。16px 未満だと iOS がフォーカスのたびに画面を拡大する ---- */
+.app--mobile .input,
+.app--mobile .palette__input,
+.app--mobile .row__edit,
+.app--mobile textarea,
+.app--mobile select { font-size: 16px; }
+.app--mobile .btn { font-size: 14px; padding: 8px 14px; }
+.app--mobile .btn--icon { padding: 0; font-size: 20px; }
+
+/* ---- メニューは画面の下から出す ---- */
+.app--mobile .ctxmenu {
+  left: 8px !important;
+  right: 8px;
+  top: auto !important;
+  bottom: 8px;
+  min-width: 0;
+  max-height: 70%;
+  overflow-y: auto;
+  padding: 6px;
+  font-size: 15px;
+}
+.app--mobile .ctxmenu__item { padding: 11px 12px; }
+.app--mobile .ctxmenu__icon { width: 20px; font-size: 17px; }
+.app--mobile .ctxmenu__key { display: none; }
+
+/* ---- コマンドパレット ---- */
+.app--mobile .palette { padding-top: 8px; }
+/* 下に余白を残し、そこを押せば閉じられるようにする（スマホには Escape が無い）。 */
+.app--mobile .palette__box { width: calc(100% - 16px); max-height: 72%; }
+.app--mobile .pitem { padding: 10px 10px; font-size: 15px; }
+.app--mobile .pitem__hint { font-size: 12px; }
+.app--mobile .pitem__key { display: none; }
+
+/* ---- モーダル・フォルダ選択 ---- */
+.app--mobile .overlay { padding: 12px; }
+.app--mobile .modal { padding: 16px; }
+.app--mobile .modal__title { font-size: 16px; }
+.app--mobile .modal__body { font-size: 14px; }
+.app--mobile .modal__actions .btn { flex: 1 1 auto; min-height: 42px; }
+.app--mobile #pickerOverlay { padding: 0; }
+.app--mobile .picker { width: 100%; height: 100%; border: none; border-radius: 0; }
+.app--mobile .picker__body { flex-direction: column; }
+.app--mobile .picker__col--narrow { flex: none; border-left: none; border-top: 1px solid var(--border); }
+.app--mobile .picker__foot { flex-wrap: wrap; }
+
+/* ---- 設定 ---- */
+.app--mobile .setting__label { font-size: 14px; }
+.app--mobile .setting__desc,
+.app--mobile .setting__note { font-size: 12px; }
+
+/* ---- トースト ---- */
+.app--mobile .toasts { left: 8px; right: 8px; bottom: 8px; max-width: none; }
+.app--mobile .toast { font-size: 13px; }
 </style>

@@ -92,6 +92,8 @@ const Vendor = {
       EditorView: viewMod.EditorView,
       keymap: viewMod.keymap,
       indentWithTab: commandsMod.indentWithTab,
+      undo: commandsMod.undo,
+      redo: commandsMod.redo,
       search: searchMod.search,
       gotoLine: searchMod.gotoLine,
       openSearchPanel: searchMod.openSearchPanel,
@@ -168,6 +170,9 @@ const Editor = {
         EditorView: v.EditorView,
         keymap: v.keymap,
         indentWithTab: v.indentWithTab,
+        // スマホのヘッダーの「元に戻す／やり直し」ボタン用（キーボードが無いため）。
+        undo: v.undo,
+        redo: v.redo,
         search: v.search,
         gotoLine: v.gotoLine,
         openSearchPanel: v.openSearchPanel,
@@ -304,6 +309,10 @@ const Editor = {
         // 読めなかったファイルは閲覧専用。裏で本文が差し替わったときに付け外しできるよう
         // Compartment に入れる（replaceDocKeepView）。
         Editor.readOnlyCompartment.of(Editor.readOnlyFor(tabId)),
+        // iOS はソフトキーボードを出しても画面が縮まず、下半分が隠れる。カーソルを
+        // 追って画面を送るときに下側へ大きめの余白を取り、カーソルを上半分に保つ。
+        EditorView.scrollMargins.of((view) => (Mobile.on && Mobile.ios && view.hasFocus
+          ? { bottom: Math.round(view.scrollDOM.clientHeight * 0.45) } : null)),
 
         // タブやツリーの行を本文の上で落としたとき、CodeMirror は既定では
         // それをテキストの貼り付けとして扱う。ここで止めて、ペイン側の

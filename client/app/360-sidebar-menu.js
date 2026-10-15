@@ -6,11 +6,16 @@ const Ctx = {
   /**
    * @param {number} x
    * @param {number} y
-   * @param {Array<Object>} items {label, icon, onClick, danger, disabled} か {sep:true}
+   * @param {Array<Object>} items {label, icon, onClick, danger, disabled, desktopOnly} か {sep:true}。
+   *        null は読み飛ばす
    */
   show(x, y, items) {
     Ctx.hide();
     el.ctxMenu.textContent = '';
+    // スマホでは分割まわり（desktopOnly）を出さない。消した前後で区切り線が
+    // 続いたり端に残ったりしないよう、あわせて詰める。
+    items = items.filter((it) => it && !(Mobile.on && it.desktopOnly));
+    items = items.filter((it, i, arr) => !it.sep || (i > 0 && i < arr.length - 1 && !arr[i - 1].sep));
 
     for (const item of items) {
       if (item.sep) {
@@ -74,6 +79,8 @@ function showNodeMenu(x, y, node) {
             'info', 3000);
         } },
       { sep: true },
+      { label: multi.length + ' 件を移動…', icon: 'move',
+        onClick: () => void moveViaPicker(multi) },
       { label: multi.length + ' 件をゴミ箱へ移動', icon: 'trash', danger: true,
         onClick: () => void trashNodes(multi) },
       { sep: true },
@@ -137,6 +144,7 @@ function showNodeMenu(x, y, node) {
         { sep: true },
         { label: '名前を変更', icon: 'rename', key: 'F2',
           onClick: () => startInlineRename(node) },
+        { label: '移動…', icon: 'move', onClick: () => void moveViaPicker([node]) },
         { label: 'ゴミ箱へ移動', icon: 'trash', key: 'Delete', danger: true,
           onClick: () => void doTrashFolder(node) }
       );
@@ -149,7 +157,8 @@ function showNodeMenu(x, y, node) {
         disabled: !entry.openable,
         onClick: () => void openEntry(entry, { ephemeral: false })
       },
-      {
+      // スマホではペインを分割しないので出さない。
+      Mobile.on ? null : {
         label: '横のペインで開く',
         icon: 'columns',
         disabled: !entry.openable ||
@@ -188,12 +197,13 @@ function showNodeMenu(x, y, node) {
       { sep: true },
       { label: '名前を変更', icon: 'rename', key: 'F2',
         onClick: () => startInlineRename(node) },
+      { label: '移動…', icon: 'move', onClick: () => void moveViaPicker([node]) },
       { label: 'ゴミ箱へ移動', icon: 'trash', key: 'Delete', danger: true,
         onClick: () => void doTrash(node) }
     );
   }
 
-  Ctx.show(x, y, items);
+  Ctx.show(x, y, items.filter(Boolean));
 }
 
 /**

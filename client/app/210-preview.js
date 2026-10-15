@@ -167,9 +167,10 @@ const Preview = {
     App.tabs.push(tab);
 
     // 隣のペインへ。無ければ分割して作り、それも無理なら同じペインに置く。
+    // スマホでは 1 枚しか出さないので、隣があっても同じペインのタブにする。
     const from = Panes.active() || Panes.init();
     const leaves = Panes.leaves();
-    const next = leaves[leaves.indexOf(from) + 1] ||
+    const next = Mobile.on ? from : leaves[leaves.indexOf(from) + 1] ||
       (leaves.length < Panes.MAX ? Panes.split(from.id, 'row', true) : from);
     Panes.addTab(next || from, tab.id);
 
